@@ -1,0 +1,101 @@
+<!doctype html>
+<html language='en'>
+<title>Games</title>
+<script src='//code.jquery.com/jquery-1.11.0.min.js'></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<link rel='stylesheet' href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css'>
+<link rel='stylesheet' href='static/style.css'>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<div class='container'>
+    <div class='col-lg-1'></div>
+    <div class='main col-lg-10'>
+        <h1 class='header'>The time for the games</h1>
+        <div class='messages'>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <p>{{ messages[0] }}</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+        <button class='add'>Add new event</button>
+        <div class='form'>
+            <form action='/add_event' method=post>
+                {{ new_event.csrf_token }}
+                <table>
+                    <tr>
+                        <td>Title:</td><td>{{ new_event.title }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date:</td><td>{{ new_event.date(id='datepicker') }}*</td>
+                    </tr>
+                    <tr>
+                        <td>Time:</td><td>{{ new_event.time }}*</td>
+                    </tr>
+                    <tr>
+                        <td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Location:</td><td>{{ new_event.location }}*</td>
+                    </tr>
+                    <tr>
+                        <td>Description:</td><td>{{ new_event.description }}</td>
+                    </tr>
+                </table>
+                <p>Fields with * are required.</p>
+                <input type=submit value='Add'>
+            </form>
+        </div>
+        <div class='calendar'>
+            {% for event in events %}
+            <div class='event'>
+                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
+                <p>When: {{ event.date }} at {{ event.time }}</p>
+                <p>Where: {{ event.location }}</p>
+                <p>{{ event.description }}</p>
+                <p>Who's coming? <button class='edit-players'>Edit</button></p>
+                <div class='players'>
+                    <table>
+                        {% for player in players[ event.id ] %}
+                        <p>
+                            <form action='remove_player' method=post>{{ player.name }} <span class='remove-button'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<input type=submit value='x'></span></form>
+                        </p>
+                        {% else %}
+                        <p><em>Nobody yet. Be the first!</em></p>
+                        {% endfor %}
+                        <tr>
+                            <td>
+                                <form action='add_player' method=post>
+                                    {{ new_player.csrf_token }}
+                                    {{ new_player.event_id(value=event.id) }}
+                                    {{ new_player.name }}{{ new_player.email }}
+                                    <input type=submit value='Add'>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p><em>Nothing here. Click 'Add new event' to fix that.</em></p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class='col-lg-1'></div>
+<script>
+$('.add').click(function(){
+    $('.form').show('slow');
+    $(this).hide();
+});
+$('.edit-players').click(function(){
+    $('.remove-button').show();
+    $(this).hide();
+});
+$(function() {
+    $( "#datepicker" ).datepicker({
+        showOtherMonths: true,
+        selectOtherMonths: true
+    });
+});
+</script>
+</html>

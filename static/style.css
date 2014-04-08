@@ -1,0 +1,41 @@
+*    {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+td    {
+    padding: 5px 20px 0px 0px;
+}
+
+.header    {
+    border-bottom:1px solid black;
+    padding-bottom:10px
+}
+
+.main    {
+    background-color:#E0E0EB;
+    border-left:10px solid black;
+    border-right:10px solid black;
+}
+
+.messages    {
+    background-color:#CC0099;
+}
+
+.form    {
+    display:none;
+}
+
+.event    {
+    padding: 10px 0px 10px 0px;
+    border-bottom:1px solid black;
+}
+
+.remove-button    {
+    display: none
+}
+
+.players    {
+    padding-left: 20px
+}
