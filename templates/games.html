@@ -3,9 +3,11 @@
 <title>Games</title>
 <script src='//code.jquery.com/jquery-1.11.0.min.js'></script>
 <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script src='static/jquery.timepicker.min.js'></script>
 <link rel='stylesheet' href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css'>
 <link rel='stylesheet' href='static/style.css'>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<link rel='stylesheet' href='static/jquery.timepicker.css'>
 <div class='container'>
     <div class='col-lg-1'></div>
     <div class='main col-lg-10'>
@@ -13,7 +15,7 @@
         <div class='messages'>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
-            <p>{{ messages[0] }}</p>
+            <p>{{ messages[0]|safe }}</p>
             {% endif %}
             {% endwith %}
         </div>
@@ -29,7 +31,7 @@
                         <td>Date:</td><td>{{ new_event.date(id='datepicker') }}*</td>
                     </tr>
                     <tr>
-                        <td>Time:</td><td>{{ new_event.time }}*</td>
+                        <td>Time:</td><td>{{ new_event.time(id='timepicker') }}*</td>
                     </tr>
                     <tr>
                         <td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td>
@@ -97,5 +99,6 @@ $(function() {
         selectOtherMonths: true
     });
 });
+$('#timepicker').timepicker();
 </script>
 </html>

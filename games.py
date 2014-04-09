@@ -6,7 +6,8 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 from flask.ext.wtf import Form
 from flask_wtf.csrf import CsrfProtect
 from wtforms import BooleanField, TextField, TextAreaField, PasswordField, \
-    HiddenField, DateField, validators
+    HiddenField, validators
+from wtforms.ext.dateutil.fields import DateField, DateTimeField
 from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -71,7 +72,7 @@ def init_db():
 # Create classes for WTForms
 
 class NewEvent(Form):
-    date = DateField('date', [validators.Required()], format='%m/%d/%Y')
+    date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
     title = TextField('title', [validators.Optional()])
@@ -137,7 +138,25 @@ def add_player():
         db_session.add(player)
         db_session.commit()
         db_session.flush()
-        flash('Success!')
+        event = Event.query.filter(Event.id == new_player.event_id.data).first()
+        text = ''
+        for d in event.title.split():
+            text += d
+            text += '+'
+        text = text[:len(text)-1]
+        date = datetime.strptime(event.date + event.time, '%Y-%m-%d%I:%M%p')
+        date = datetime.strftime(date, '%Y%m%dT%H%M%S')
+        details = ''
+        for d in event.description.split():
+            details += d
+            details += '+'
+        details = details[:len(details)-1]
+        location = ''
+        for d in event.location.split():
+            location += d
+            location += '+'
+        location = location[:len(location)-1]
+        flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location=&sf=true&output=xml'>Add to Google Calendar?</a>")
     else:
         flash(new_player.errors)
     return redirect('/games')
