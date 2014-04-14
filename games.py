@@ -103,6 +103,8 @@ def games():
         date = datetime.strptime(event.date, '%Y-%m-%d')
         if date > datetime.now():
             events.append(event)
+        event.date = datetime.strftime(date, '%B %d, %Y')
+    events = sorted(events, key=lambda event: event.date)
     players = {}
     for player in Player.query.all():
         try:
