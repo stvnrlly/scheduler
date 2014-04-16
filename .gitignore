@@ -1,2 +1,4 @@
 games.db
 *.pyc
+venv
+deactivate

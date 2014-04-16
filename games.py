@@ -119,6 +119,7 @@ def games():
                             new_player=new_player, remove_player=remove_player)
 
 @app.route('/add_event', methods=['POST'])
+@app.route('/edit_event', methods=['POST'])
 def add_event():
     new_event = NewEvent(request.form)
     if new_event.validate_on_submit():
@@ -158,7 +159,7 @@ def add_player():
             location += d
             location += '+'
         location = location[:len(location)-1]
-        flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location=&sf=true&output=xml'>Add to Google Calendar?</a>")
+        flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
     else:
         flash(new_player.errors)
     return redirect('/')
