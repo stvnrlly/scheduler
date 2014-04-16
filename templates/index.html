@@ -28,10 +28,10 @@
                         <td>Title:</td><td>{{ new_event.title }}</td>
                     </tr>
                     <tr>
-                        <td>Date:</td><td>{{ new_event.date(id='datepicker') }}*</td>
+                        <td>Date:</td><td>{{ new_event.date(class='datepicker') }}*</td>
                     </tr>
                     <tr>
-                        <td>Time:</td><td>{{ new_event.time(id='timepicker') }}*</td>
+                        <td>Time:</td><td>{{ new_event.time(class='timepicker') }}*</td>
                     </tr>
                     <tr>
                         <td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td>
@@ -49,8 +49,33 @@
         </div>
         <div class='calendar'>
             {% for event in events %}
-            <div class='event'>
-                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
+            <form action='edit_event' class='event-editor' id='{{ event.id }}' method='post'>
+                {{ edit_event.csrf_token }}
+                {{ edit_event.id(value=event.id) }}
+                <table>
+                    <tr>
+                        <td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td>
+                    </tr>
+                    <tr>
+                        <td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Description:</td><td>{{ edit_event.description(value=event.description) }}</td>
+                    </tr>
+                </table>
+                <input type=submit value='Submit'>
+            </form>
+            <div class='event' id='{{ event.id }}'>
+                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2><button class='edit-event' id='{{ event.id }}'>Edit</button>
                 <p>When: {{ event.date }} at {{ event.time }}</p>
                 <p>Where: {{ event.location }}</p>
                 <p>{{ event.description }}</p>
@@ -89,17 +114,22 @@ $('.add').click(function(){
     $('.form').show('slow');
     $(this).hide();
 });
+$('.edit-event').click(function(){
+    var find = $(this).attr('id');
+    $('.event-editor#' + find).show();
+    $(this, '.event#' + find).hide();
+});
 $('.edit-players').click(function(){
     $('.remove-button').show();
     $(this).hide();
 });
 $(function() {
-    $( "#datepicker" ).datepicker({
+    $( ".datepicker" ).datepicker({
         showOtherMonths: true,
         selectOtherMonths: true
     });
 });
-$('#timepicker').timepicker({
+$('.timepicker').timepicker({
     minTime: '5:00pm'
 });
 </script>

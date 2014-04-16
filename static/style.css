@@ -32,10 +32,14 @@ td    {
     border-bottom:1px solid black;
 }
 
+.event-editor    {
+    display:none;
+}
+
 .remove-button    {
-    display: none
+    display: none;
 }
 
 .players    {
-    padding-left: 20px
+    padding-left: 20px;
 }

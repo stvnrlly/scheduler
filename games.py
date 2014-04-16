@@ -40,6 +40,8 @@ class Event(Base):
     date = Column(String, nullable=False)
     time = Column(String, nullable=False)
     location = Column(String, nullable=False)
+#    host
+#    host_email
     title = Column(String, nullable=False)
     description = Column(String)
     minimum = Column(Integer)
@@ -88,6 +90,16 @@ class NewPlayer(Form):
 class RemovePlayer(Form):
     id = HiddenField('id')
 
+class EditEvent(Form):
+    id = HiddenField('id')
+    date = DateField('date', [validators.Optional()])
+    time = TextField('time', [validators.Optional()])
+    location = TextField('location', [validators.Optional()])
+    title = TextField('title', [validators.Optional()])
+    description = TextAreaField('description', [validators.Optional()])
+    minimum = TextField('minimum', [validators.Optional()])
+    maximum = TextField('maximum', [validators.Optional()])
+
 # Make sure to close the database properly
 
 @app.teardown_appcontext
@@ -115,11 +127,11 @@ def games():
     new_event = NewEvent(request.form)
     new_player = NewPlayer(request.form)
     remove_player = RemovePlayer(request.form)
+    edit_event = EditEvent(request.form)
     return render_template('index.html', events=events, players=players, new_event=new_event, \
-                            new_player=new_player, remove_player=remove_player)
+                            new_player=new_player, remove_player=remove_player, edit_event=edit_event)
 
 @app.route('/add_event', methods=['POST'])
-@app.route('/edit_event', methods=['POST'])
 def add_event():
     new_event = NewEvent(request.form)
     if new_event.validate_on_submit():
@@ -175,6 +187,25 @@ def remove_player():
         flash('Removed. Want to try another time?')
     else:
         flash(remove_player.errors)
+    return redirect('/')
+
+@app.route('/edit_event', methods=['POST'])
+def edit_event():
+    edit_event = EditEvent(request.form)
+    if edit_event.validate_on_submit():
+        event = Event.query.filter(Event.id == edit_event.id.data).first()
+        event.date = edit_event.date.data
+        event.time = edit_event.time.data
+        event.location = edit_event.location.data
+        event.title = edit_event.title.data
+        event.description = edit_event.description.data
+        event.minimum = edit_event.minimum.data
+        event.maximum = edit_event.maximum.data
+        db_session.commit()
+        db_session.flush()
+        flash('Event was successfully edited')
+    else:
+        flash(edit_event.errors)
     return redirect('/')
 
 # Run the application
