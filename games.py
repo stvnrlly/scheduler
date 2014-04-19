@@ -108,7 +108,7 @@ def shutdown_session(exception=None):
 
 # Create views
 
-@app.route('/', methods=['GET','POST'])
+@app.route('/games', methods=['GET','POST'])
 def games():
     events = []
     for event in Event.query.all():
@@ -143,7 +143,7 @@ def add_event():
         flash('New event was successfully created')
     else:
         flash(new_event.errors)
-    return redirect('/')
+    return redirect('/games')
 
 @app.route('/add_player', methods=['POST'])
 def add_player():
@@ -174,7 +174,7 @@ def add_player():
         flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
     else:
         flash(new_player.errors)
-    return redirect('/')
+    return redirect('/games')
 
 @app.route('/remove_player', methods=['POST'])
 def remove_player():
@@ -187,7 +187,7 @@ def remove_player():
         flash('Removed. Want to try another time?')
     else:
         flash(remove_player.errors)
-    return redirect('/')
+    return redirect('/games')
 
 @app.route('/edit_event', methods=['POST'])
 def edit_event():
@@ -206,7 +206,7 @@ def edit_event():
         flash('Event was successfully edited')
     else:
         flash(edit_event.errors)
-    return redirect('/')
+    return redirect('/games')
 
 # Run the application
 
