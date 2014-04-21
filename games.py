@@ -40,17 +40,18 @@ class Event(Base):
     date = Column(String, nullable=False)
     time = Column(String, nullable=False)
     location = Column(String, nullable=False)
-#    host
+    host = Column(String, nullable=False)
 #    host_email
     title = Column(String, nullable=False)
     description = Column(String)
     minimum = Column(Integer)
     maximum = Column(Integer)
 
-    def __init__(self, date, time, location, title, description, minimum, maximum):
+    def __init__(self, date, time, location, host, title, description, minimum, maximum):
         self.date = date
         self.time = time
         self.location = location
+        self.host = host
         self.title = title
         self.description = description
         self.minimum = minimum
@@ -77,6 +78,7 @@ class NewEvent(Form):
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
+    host = TextField('host', [validators.Required()])
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -95,6 +97,7 @@ class EditEvent(Form):
     date = DateField('date', [validators.Optional()])
     time = TextField('time', [validators.Optional()])
     location = TextField('location', [validators.Optional()])
+    host = TextField('host', [validators.Required()])
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -136,7 +139,8 @@ def add_event():
     new_event = NewEvent(request.form)
     if new_event.validate_on_submit():
         event = Event(new_event.date.data, new_event.time.data, new_event.location.data, \
-                new_event.title.data, new_event.description.data, new_event.minimum.data, new_event.maximum.data)
+                new_event.host.data, new_event.title.data, new_event.description.data, new_event.minimum.data, \
+                new_event.maximum.data)
         db_session.add(event)
         db_session.commit()
         db_session.flush()
@@ -197,6 +201,7 @@ def edit_event():
         event.date = edit_event.date.data
         event.time = edit_event.time.data
         event.location = edit_event.location.data
+        event.host = edit_event.host.data
         event.title = edit_event.title.data
         event.description = edit_event.description.data
         event.minimum = edit_event.minimum.data
