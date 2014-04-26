@@ -80,7 +80,7 @@ class NewEvent(Form):
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
     host = TextField('host', [validators.Required()])
-#   host_email
+    host_email = TextField('host_email')
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -100,7 +100,7 @@ class EditEvent(Form):
     time = TextField('time', [validators.Optional()])
     location = TextField('location', [validators.Optional()])
     host = TextField('host', [validators.Required()])
-#   host_email
+    host_email = TextField('host_email')
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -142,7 +142,7 @@ def add_event():
     new_event = NewEvent(request.form)
     if new_event.validate_on_submit():
         event = Event(new_event.date.data, new_event.time.data, new_event.location.data, \
-                new_event.host.data, new_event.host_email.data new_event.title.data, \
+                new_event.host.data, new_event.host_email.data, new_event.title.data, \
                 new_event.description.data, new_event.minimum.data, new_event.maximum.data)
         db_session.add(event)
         db_session.commit()

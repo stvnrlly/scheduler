@@ -28,7 +28,7 @@
                         <td>Title:</td><td>{{ new_event.title }}</td>
                     </tr>
                     <tr>
-                        <td>Date:</td><td>{{ new_event.date(class='datepicker') }}*</td>
+                        <td>Date:</td><td>{{ new_event.date(class='datepicker', id=0) }}*</td>
                     </tr>
                     <tr>
                         <td>Time:</td><td>{{ new_event.time(class='timepicker') }}*</td>
@@ -60,7 +60,7 @@
                         <td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td>
                     </tr>
                     <tr>
-                        <td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker') }}</td>
+                        <td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker', id='pick'~event.id) }}</td>
                     </tr>
                     <tr>
                         <td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td>
@@ -78,7 +78,17 @@
                 <input type=submit value='Submit'>
             </form>
             <div class='event' id='{{ event.id }}'>
-                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2><button class='edit-event' id='{{ event.id }}'>Edit</button>
+                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
+                <button class='edit-event' id='{{ event.id }}'>Edit</button>
+                {% if event.minimum %}
+                <p
+                    {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
+                        style='background-color:red;'
+                    {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
+                        style='background-color:green;'
+                    {% endif %}
+                    >Players needed: {{event.minimum}}</p>
+                {% endif %}
                 <p>When: {{ event.date }} at {{ event.time }}</p>
                 <p>Where: {{ event.location }}</p>
                 <p>{{ event.description }}</p>
@@ -127,6 +137,7 @@ $('.edit-players').click(function(){
 });
 $(function() {
     $( '.datepicker' ).datepicker({
+        dateFormat: "MM dd, yy",
         showOtherMonths: true,
         selectOtherMonths: true
     });
