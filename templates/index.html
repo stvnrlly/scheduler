@@ -21,7 +21,7 @@
         </div>
         <button class='add'>Add new event</button>
         <div class='form'>
-            <form action='/add_event' method=post>
+            <form action='add_event' method=post>
                 {{ new_event.csrf_token }}
                 <table>
                     <tr>
@@ -70,6 +70,9 @@
                     </tr>
                     <tr>
                         <td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td>
                     </tr>
                     <tr>
                         <td>Description:</td><td>{{ edit_event.description(value=event.description) }}</td>
