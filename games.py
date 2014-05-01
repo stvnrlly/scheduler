@@ -119,7 +119,7 @@ def games():
     events = []
     for event in Event.query.all():
         date = datetime.strptime(event.date, '%Y-%m-%d')
-        if date > datetime.now():
+        if date >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
             events.append(event)
         event.date = datetime.strftime(date, '%B %d, %Y')
     events = sorted(events, key=lambda event: event.date)
