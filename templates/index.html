@@ -38,7 +38,8 @@
         </div>
         <div class='calendar'>
             {% for event in events %}
-            <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
+            <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
+            <p>{{ event.description }}</p>
             <button class='edit-event' id='{{ event.id }}'>Edit event</button>
             <form action='edit_event' class='event-editor' id='{{ event.id }}' method='post'>
                 {{ edit_event.csrf_token }}
@@ -62,13 +63,15 @@
                     {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
                         style='background-color:green;'
                     {% endif %}
-                    >Players needed: {{event.minimum}}{% endif %}{% if event.maximum %}-{{event.maximum}}
+                    >Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}
+                {% elif event.maximum %}
+                <p>Maximum capacity: {{event.maximum}}</p>
                 {% else %}
                 </p>
                 {% endif %}
                 <p>When: {{ event.date }} at {{ event.time }}</p>
                 <p>Where: {{ event.location }}</p>
-                <p>{{ event.description }}</p>
+
                 <p>Who's coming? <button class='edit-players'>Edit guests</button></p>
                 <div class='players'>
                     <table>
@@ -78,7 +81,7 @@
                             <form action='remove_player' method='post'>{{ player.name }} <span class='remove-button'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<input type=submit value='x'></span></form>
                         </p>
                         {% endfor %}
-                        {% if event.maximum|int() > (players[ event.id ]|length + 1) %}
+                        {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or not event.maximum %}
                         <tr>
                             <td>
                                 <form action='add_player' method=post>
