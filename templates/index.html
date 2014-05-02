@@ -24,27 +24,13 @@
             <form action='add_event' method=post>
                 {{ new_event.csrf_token }}
                 <table>
-                    <tr>
-                        <td>Title:</td><td>{{ new_event.title }}</td>
-                    </tr>
-                    <tr>
-                        <td>Date:</td><td>{{ new_event.date(class='datepicker', id=0) }}*</td>
-                    </tr>
-                    <tr>
-                        <td>Time:</td><td>{{ new_event.time(class='timepicker') }}*</td>
-                    </tr>
-                    <tr>
-                        <td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Location:</td><td>{{ new_event.location }}*</td>
-                    </tr>
-                    <tr>
-                        <td>Host:</td><td>{{ new_event.host }}*</td>
-                    </tr>
-                    <tr>
-                        <td>Description:</td><td>{{ new_event.description }}</td>
-                    </tr>
+                    <tr><td>Title:</td><td>{{ new_event.title }}</td></tr>
+                    <tr><td>Date:</td><td>{{ new_event.date(class='datepicker', id=0) }}*</td></tr>
+                    <tr><td>Time:</td><td>{{ new_event.time(class='timepicker') }}*</td></tr>
+                    <tr><td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td></tr>
+                    <tr><td>Location:</td><td>{{ new_event.location }}*</td></tr>
+                    <tr><td>Host:</td><td>{{ new_event.host }}*</td></tr>
+                    <tr><td>Description:</td><td>{{ new_event.description }}</td></tr>
                 </table>
                 <p>Fields with * are required.</p>
                 <input type=submit value='Add'>
@@ -52,37 +38,23 @@
         </div>
         <div class='calendar'>
             {% for event in events %}
+            <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
+            <button class='edit-event' id='{{ event.id }}'>Edit</button>
             <form action='edit_event' class='event-editor' id='{{ event.id }}' method='post'>
                 {{ edit_event.csrf_token }}
                 {{ edit_event.id(value=event.id) }}
                 <table>
-                    <tr>
-                        <td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker', id='pick'~event.id) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td>
-                    </tr>
-                    <tr>
-                        <td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Description:</td><td>{{ edit_event.description(value=event.description) }}</td>
-                    </tr>
+                    <tr><td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td></tr>
+                    <tr><td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker', id='pick'~event.id) }}</td></tr>
+                    <tr><td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td></tr>
+                    <tr><td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td></tr>
+                    <tr><td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td></tr>
+                    <tr><td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td></tr>
+                    <tr><td>Description:</td><td>{{ edit_event.description(value=event.description) }}</td></tr>
                 </table>
                 <input type=submit value='Submit'>
             </form>
             <div class='event' id='{{ event.id }}'>
-                <h2>#{{ event.id}}{% if event.title %}: {{ event.title }}{% endif %}</h2>
-                <button class='edit-event' id='{{ event.id }}'>Edit</button>
                 {% if event.minimum %}
                 <p
                     {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
@@ -101,7 +73,7 @@
                         <p>{{ event.host }}, <em>host</em></p>
                         {% for player in players[ event.id ] %}
                         <p>
-                            <form action='remove_player' method=post>{{ player.name }} <span class='remove-button'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<input type=submit value='x'></span></form>
+                            <form action='remove_player' method='post'>{{ player.name }} <span class='remove-button'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<input type=submit value='x'></span></form>
                         </p>
                         {% endfor %}
                         <tr>
@@ -123,6 +95,7 @@
         </div>
     </div>
 </div>
+<footer></footer>
 <div class='col-lg-1'></div>
 <script>
 $('.add').click(function(){
@@ -131,8 +104,9 @@ $('.add').click(function(){
 });
 $('.edit-event').click(function(){
     var find = $(this).attr('id');
-    $('.event-editor#' + find).show();
-    $(this, '.event#' + find).hide();
+    $('#'+find+'.event-editor').show();
+    $('#'+find+'.event').hide();
+    $(this).hide();
 });
 $('.edit-players').click(function(){
     $('.remove-button').show();
