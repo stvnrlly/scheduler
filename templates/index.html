@@ -30,7 +30,7 @@
                     <tr><td>Players:</td><td>{{ new_event.minimum(size=2, maxlength=2) }} to {{ new_event.maximum(size=2, maxlength=2) }}</td></tr>
                     <tr><td>Location:</td><td>{{ new_event.location }}*</td></tr>
                     <tr><td>Host:</td><td>{{ new_event.host }}*</td></tr>
-                    <tr><td>Description:</td><td>{{ new_event.description }}</td></tr>
+                    <tr><td>Description:</td><td>{{ new_event.description(rows=3, cols=30) }}</td></tr>
                 </table>
                 <p>Fields with * are required.</p>
                 <input type=submit value='Add'>
@@ -51,7 +51,7 @@
                     <tr><td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td></tr>
                     <tr><td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td></tr>
                     <tr><td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td></tr>
-                    <tr><td>Description:</td><td>{{ edit_event.description(value=event.description) }}</td></tr>
+                    <tr><td>Description:</td><td>{{ edit_event.description(rows=3, cols=30, value=event.description) }}</td></tr>
                 </table>
                 <input type=submit value='Submit'>
             </form>
@@ -116,6 +116,7 @@ $('.edit-event').click(function(){
     $('#'+find+'.event-editor').show();
     $('#'+find+'.event').hide();
     $(this).hide();
+    $('#'+find+'.event-editor').find('textarea').text( $('#'+find+'.event-editor').find('textarea').attr('value') );
 });
 $('.edit-players').click(function(){
     $('.remove-button').show();

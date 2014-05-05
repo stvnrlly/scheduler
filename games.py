@@ -8,6 +8,7 @@ from flask_wtf.csrf import CsrfProtect
 from wtforms import BooleanField, TextField, TextAreaField, PasswordField, \
     HiddenField, validators
 from wtforms.ext.dateutil.fields import DateField, DateTimeField
+from wtforms.widgets import TextArea
 from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -82,7 +83,7 @@ class NewEvent(Form):
     host = TextField('host', [validators.Required()])
     host_email = TextField('host_email')
     title = TextField('title', [validators.Optional()])
-    description = TextAreaField('description', [validators.Optional()])
+    description = TextField('description', [validators.Optional()], widget=TextArea())
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
@@ -102,7 +103,7 @@ class EditEvent(Form):
     host = TextField('host', [validators.Required()])
     host_email = TextField('host_email')
     title = TextField('title', [validators.Optional()])
-    description = TextAreaField('description', [validators.Optional()])
+    description = TextField('description', [validators.Optional()], widget=TextArea())
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
