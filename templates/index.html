@@ -1,17 +1,5 @@
-<!doctype html>
-<html language='en'>
-<title>Games</title>
-<script src='//code.jquery.com/jquery-1.11.0.min.js'></script>
-<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-<script src='static/jquery.timepicker.min.js'></script>
-<link rel='stylesheet' href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css'>
-<link rel='stylesheet' href='static/style.css'>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
-<link rel='stylesheet' href='static/jquery.timepicker.css'>
-<div class='container'>
-    <div class='col-lg-1'></div>
-    <div class='main col-lg-10'>
-        <h1 class='header'>The time for the games</h1>
+{% extends 'layout.html' %}
+{% block body %}
         <div class='messages'>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -82,16 +70,18 @@
                         </p>
                         {% endfor %}
                         {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or not event.maximum %}
+                        {% if user %}
                         <tr>
                             <td>
                                 <form action='add_player' method=post>
                                     {{ new_player.csrf_token }}
                                     {{ new_player.event_id(value=event.id) }}
-                                    {{ new_player.name }}{{ new_player.email }}
-                                    <input type=submit value='Add'>
+                                    <p>{{ new_player.name }} <input type=submit value='Add'></p>
+                                    <p>{{ new_player.email_changes(value=0) }} Email with updates</p>
                                 </form>
                             </td>
                         </tr>
+                        {% endif %}
                         {% else %}
                         At capacity!
                         {% endif %}
@@ -102,10 +92,6 @@
             <p><em>Nothing here. Click 'Add new event' to fix that.</em></p>
             {% endfor %}
         </div>
-    </div>
-</div>
-<footer></footer>
-<div class='col-lg-1'></div>
 <script>
 $('.add').click(function(){
     $('.form').show('slow');
@@ -133,4 +119,4 @@ $('.timepicker').timepicker({
     minTime: '5:00pm'
 });
 </script>
-</html>
+{% endblock %}

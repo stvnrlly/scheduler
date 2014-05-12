@@ -2,3 +2,4 @@ games.db
 *.pyc
 venv
 deactivate
+creds.py
