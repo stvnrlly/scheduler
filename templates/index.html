@@ -1,5 +1,43 @@
-{% extends 'layout.html' %}
-{% block body %}
+<!doctype html>
+<html language='en'>
+<head>
+    <title>Upcoming Games</title>
+    <link rel='stylesheet' href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css'>
+    <link rel='stylesheet' href='static/style.css'>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+    <link rel='stylesheet' href='static/jquery.timepicker.css'>
+</head>
+<body>
+    <nav class="navbar navbar-default     navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Upcoming Games</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    {% if user %}
+                    <li class='navbar-text'>Signed in as {{ user.name }}</li>
+                    <li><a href='#profile'>Edit Profile</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="logout">Sign out</a></li>
+                    {% else %}
+                    <li><a href="login">Sign in using Google</a></li>
+                    {% endif %}
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+    <div class='container'>
         <div class='messages'>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -7,8 +45,10 @@
             {% endif %}
             {% endwith %}
         </div>
-        <button class='add'>Add new event</button>
-        <div class='form'>
+        {% if user %}
+        <button class='btn center add'>Add new event</button>
+        <div class='form unseen'>
+            <h3>Add New Event</h3>
             <form action='add_event' method=post>
                 {{ new_event.csrf_token }}
                 <table>
@@ -21,92 +61,121 @@
                     <tr><td>Description:</td><td>{{ new_event.description(rows=3, cols=30) }}</td></tr>
                 </table>
                 <p>Fields with * are required.</p>
-                <input type=submit value='Add'>
+                <button class='btn' type=submit>Add</button>
             </form>
         </div>
+        {% else %}
+        <div>
+            <h1 class='text-center'>What's happening</h1>
+        </div>
+        {% endif %}
+        <hr>
         <div class='calendar'>
             {% for event in events %}
-            <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
-            <p>{{ event.description }}</p>
-            <button class='edit-event' id='{{ event.id }}'>Edit event</button>
-            <form action='edit_event' class='event-editor' id='{{ event.id }}' method='post'>
-                {{ edit_event.csrf_token }}
-                {{ edit_event.id(value=event.id) }}
-                <table>
-                    <tr><td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td></tr>
-                    <tr><td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker', id='pick'~event.id) }}</td></tr>
-                    <tr><td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td></tr>
-                    <tr><td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td></tr>
-                    <tr><td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td></tr>
-                    <tr><td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td></tr>
-                    <tr><td>Description:</td><td>{{ edit_event.description(rows=3, cols=30, value=event.description) }}</td></tr>
-                </table>
-                <input type=submit value='Submit'>
-            </form>
-            <div class='event' id='{{ event.id }}'>
-                {% if event.minimum %}
-                <p
+            <div> <!-- begin event {{ event.id }} -->
+                {% if user %}
+                <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
+                {% endif %}
+                <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
+                <p>{{ event.description }}</p>
+                <form action='edit_event' class='event-editor unseen {{ event.id }}' method='post'>
+                    {{ edit_event.csrf_token }}
+                    {{ edit_event.id(value=event.id) }}
+                    <table>
+                        <tr><td>Title:</td><td>{{ edit_event.title(value=event.title) }}</td></tr>
+                        <tr><td>Date:</td><td>{{ edit_event.date(value=event.date, class='datepicker', id='pick'~event.id) }}</td></tr>
+                        <tr><td>Time:</td><td>{{ edit_event.time(value=event.time, class='timepicker') }}</td></tr>
+                        <tr><td>Players:</td><td>{{ edit_event.minimum(value=event.minimum, size=2, maxlength=2) }} to {{ edit_event.maximum(value=event.maximum, size=2, maxlength=2 )}}</td></tr>
+                        <tr><td>Location:</td><td>{{ edit_event.location(value=event.location) }}</td></tr>
+                        <tr><td>Host:</td><td>{{ edit_event.host(value=event.host) }}</td></tr>
+                        <tr><td>Description:</td><td>{{ edit_event.description(rows=3, cols=30, value=event.description) }}</td></tr>
+                    </table>
+                    <button class='btn' type=submit>Submit</button>
+                </form>
+                <div class='event {{ event.id }}'>
+                    {% if event.minimum %}
+                    <p style='display:inline-block;'>Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}</p>
                     {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
-                        style='background-color:red;'
+                    <p style='background-color:red; display:inline-block'>▢▢▢</p>
                     {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
-                        style='background-color:green;'
+                    <p style='background-color:green; display:inline-block;'>▢▢▢</p>
                     {% endif %}
-                    >Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}
-                {% elif event.maximum %}
-                <p>Maximum capacity: {{event.maximum}}</p>
-                {% else %}
+                    {% elif event.maximum %}
+                    <p>Maximum capacity: {{event.maximum}}</p>
+                    {% else %}
                 </p>
                 {% endif %}
                 <p>When: {{ event.date }} at {{ event.time }}</p>
                 <p>Where: {{ event.location }}</p>
 
-                <p>Who's coming? <button class='edit-players'>Edit guests</button></p>
+                <p style='display: inline-block'>Who's coming?</p>
+                {% if user %}
+                <button class='btn-xs edit-players'>Edit guests</button>
+                {% endif %}
                 <div class='players'>
                     <table>
                         <p>{{ event.host }}, <em>host</em></p>
-                        {% for player in players[ event.id ] %}
-                        <p>
-                            <form action='remove_player' method='post'>{{ player.name }} <span class='remove-button'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<input type=submit value='x'></span></form>
-                        </p>
-                        {% endfor %}
-                        {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or not event.maximum %}
                         {% if user %}
-                        <tr>
-                            <td>
-                                <form action='add_player' method=post>
-                                    {{ new_player.csrf_token }}
-                                    {{ new_player.event_id(value=event.id) }}
-                                    <p>{{ new_player.name }} <input type=submit value='Add'></p>
-                                    <p>{{ new_player.email_changes(value=0) }} Email with updates</p>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endif %}
+                        {% for player in players[ event.id ] %}
+                        {% if (player.added_by == user.oauth_token) or (user.role == 'admin') %}
+                        <p><form action='remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
                         {% else %}
-                        At capacity!
+                        <p>{{ player.name }}</p>
+                        {% endif %}
+                        {% endfor %}
                         {% endif %}
                     </table>
                 </div>
+                {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or not event.maximum %}
+                {% if user %}
+                <form action='add_player' method=post>
+                    {{ new_player.csrf_token }}
+                    {{ new_player.event_id(value=event.id) }}
+                    <p class='add-guest' style='display:none'>{{ new_player.name(value=user.name, class=event.id) }}</p><button class='btn add-guest unseen' type=submit>Add Guest</button><button class='btn add-self' type=submit>Add Self</button><a role='button' class='btn btn-default add-guest-button' id='{{event.id}}'>Bring a Guest</a>
+                    <p class='add-self'>{{ new_player.email_changes(value=0) }} Email with updates</p>
+                </form>
+                {% endif %}
+                {% else %}
+                At capacity!
+                {% endif %}
             </div>
-            {% else %}
-            <p><em>Nothing here. Click 'Add new event' to fix that.</em></p>
-            {% endfor %}
         </div>
+        {% else %}
+        <div><em>Nothing here. Click 'Add new event' to fix that.</em></div>
+        {% endfor %}
+        <hr>
+        <div class='footer text-right'>
+            Check out the source on <a href='https://github.com/stvnrlly/scheduler'>Github</a>
+        </div>
+    </div><!-- /.container -->
+</body>
+<script src='//code.jquery.com/jquery-1.11.0.min.js'></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script src='static/jquery.timepicker.min.js'></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 <script>
 $('.add').click(function(){
-    $('.form').show('slow');
+    $('.form').show('fast');
     $(this).hide();
 });
 $('.edit-event').click(function(){
     var find = $(this).attr('id');
-    $('#'+find+'.event-editor').show();
-    $('#'+find+'.event').hide();
+    $('.'+find+'.event-editor').show();
+    $('.'+find+'.event').hide();
     $(this).hide();
-    $('#'+find+'.event-editor').find('textarea').text( $('#'+find+'.event-editor').find('textarea').attr('value') );
+    $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
 });
 $('.edit-players').click(function(){
     $('.remove-button').show();
     $(this).hide();
+});
+$('.add-guest-button').click(function(){
+    $(this).hide();
+    var id = $(this).attr('id')
+    $('.add-self').hide();
+    $('.add-guest').show();
+    var self = $('.'+id+'#name').attr('value');
+    $('.'+id+'#name').attr('value', '');
 });
 $(function() {
     $( '.datepicker' ).datepicker({
@@ -119,4 +188,4 @@ $('.timepicker').timepicker({
     minTime: '5:00pm'
 });
 </script>
-{% endblock %}
+</html>

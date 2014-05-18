@@ -80,20 +80,23 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    role = Column(String)
     email = Column(String, unique=True)
     oauth_token = Column(String)
 
 class Player(Base):
     __tablename__ = 'players'
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False)
     event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
     email_changes = Column(Integer, nullable=False)
+    added_by = Column(String)
 
-    def __init__(self, name, email_changes, event_id):
+    def __init__(self, name, email_changes, event_id, added_by):
         self.name = name
         self.email_changes = email_changes
         self.event_id = event_id
+        self.added_by = added_by
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -193,11 +196,10 @@ def authorized(resp):
     info = json.loads(res.read())
     user = User.query.filter(User.oauth_token == info['id']).first()
     if user == None:
-        user = User(name = info['name'], email = info['email'], oauth_token = info['id'])
+        user = User(name = info['name'], email = info['email'], oauth_token = info['id'], role='user')
         db_session.add(user)
         db_session.commit()
         db_session.flush()
-    print user
     session['user'] = user.id
     return redirect(url_for('games'))
 
@@ -223,8 +225,10 @@ def add_event():
 @app.route('/add_player', methods=['POST'])
 def add_player():
     new_player = NewPlayer(request.form)
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
     if new_player.validate_on_submit():
-        player = Player(new_player.name.data, new_player.email_changes.data, new_player.event_id.data)
+        player = Player(new_player.name.data, new_player.email_changes.data, new_player.event_id.data, added_by=user.oauth_token)
         db_session.add(player)
         db_session.commit()
         db_session.flush()
