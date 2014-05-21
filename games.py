@@ -10,7 +10,7 @@ from flask_oauth import OAuth
 from wtforms import BooleanField, TextField, TextAreaField, PasswordField, \
     HiddenField, validators
 from wtforms.ext.dateutil.fields import DateField, DateTimeField
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
+from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, exc
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -65,8 +65,9 @@ class Event(Base):
     description = Column(String)
     minimum = Column(Integer)
     maximum = Column(Integer)
+    added_by = Column(String)
 
-    def __init__(self, date, time, location, host, title, description, minimum, maximum):
+    def __init__(self, date, time, location, host, title, description, minimum, maximum, added_by):
         self.date = date
         self.time = time
         self.location = location
@@ -75,6 +76,7 @@ class Event(Base):
         self.description = description
         self.minimum = minimum
         self.maximum = maximum
+        self.added_by = added_by
 
 class User(Base):
     __tablename__ = 'users'
@@ -154,17 +156,21 @@ def games():
         event.date = datetime.strftime(date, '%B %d, %Y')
     events = sorted(events, key=lambda event: event.date)
     players = {}
+    adders = {}
     for player in Player.query.all():
         try:
             players[player.event_id].append(player)
+            adders[player.event_id].append(player.added_by)
         except KeyError:
             players[player.event_id] = []
             players[player.event_id].append(player)
+            adders[player.event_id] = []
+            adders[player.event_id].append(player.added_by)
     new_event = NewEvent(request.form)
     new_player = NewPlayer(request.form)
     remove_player = RemovePlayer(request.form)
     edit_event = EditEvent(request.form)
-    return render_template('index.html', user=user, events=events, players=players, new_event=new_event, \
+    return render_template('index.html', user=user, events=events, players=players, adders=adders, new_event=new_event, \
                             new_player=new_player, remove_player=remove_player, edit_event=edit_event)
 
 @app.route('/login')
@@ -212,8 +218,8 @@ def add_event():
     new_event = NewEvent(request.form)
     if new_event.validate_on_submit():
         event = Event(new_event.date.data, new_event.time.data, new_event.location.data, \
-                new_event.host.data, new_event.title.data, \
-                new_event.description.data, new_event.minimum.data, new_event.maximum.data)
+                new_event.host.data, new_event.title.data, new_event.description.data, \
+                new_event.minimum.data, new_event.maximum.data, added_by=user.oauth_token)
         db_session.add(event)
         db_session.commit()
         db_session.flush()
@@ -228,29 +234,32 @@ def add_player():
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
     if new_player.validate_on_submit():
-        player = Player(new_player.name.data, new_player.email_changes.data, new_player.event_id.data, added_by=user.oauth_token)
-        db_session.add(player)
-        db_session.commit()
-        db_session.flush()
-        event = Event.query.filter(Event.id == new_player.event_id.data).first()
-        text = ''
-        for d in event.title.split():
-            text += d
-            text += '+'
-        text = text[:len(text)-1]
-        date = datetime.strptime(event.date + event.time, '%Y-%m-%d%I:%M%p')
-        date = datetime.strftime(date, '%Y%m%dT%H%M%S')
-        details = ''
-        for d in event.description.split():
-            details += d
-            details += '+'
-        details = details[:len(details)-1]
-        location = ''
-        for d in event.location.split():
-            location += d
-            location += '+'
-        location = location[:len(location)-1]
-        flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
+        try:
+            player = Player(new_player.name.data, new_player.email_changes.data, new_player.event_id.data, added_by=user.oauth_token)
+            db_session.add(player)
+            db_session.commit()
+            db_session.flush()
+            event = Event.query.filter(Event.id == new_player.event_id.data).first()
+            text = ''
+            for d in event.title.split():
+                text += d
+                text += '+'
+            text = text[:len(text)-1]
+            date = datetime.strptime(event.date + event.time, '%Y-%m-%d%I:%M%p')
+            date = datetime.strftime(date, '%Y%m%dT%H%M%S')
+            details = ''
+            for d in event.description.split():
+                details += d
+                details += '+'
+            details = details[:len(details)-1]
+            location = ''
+            for d in event.location.split():
+                location += d
+                location += '+'
+            location = location[:len(location)-1]
+            flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
+        except exc.SQLAlchemyError:
+            flash("You've already added that person! Try another name.")
     else:
         flash(new_player.errors)
     return redirect('/games')
@@ -263,7 +272,7 @@ def remove_player():
         db_session.delete(player)
         db_session.commit()
         db_session.flush()
-        flash('Removed. Want to try another time?')
+        flash('Successfully removed.')
     else:
         flash(remove_player.errors)
     return redirect('/games')
