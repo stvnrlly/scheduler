@@ -1,268 +1,220 @@
-<!doctype html>
-<html language='en'>
-<head>
-    <title>Upcoming Games</title>
-    <link rel='stylesheet' href='static/css/bootstrap.min.css'>
-    <link rel='stylesheet' href='static/css/style.css'>
-    <link rel="stylesheet" href="static/css/jquery-ui-1.10.4.min.css">
-    <link rel='stylesheet' href='static/css/jquery.timepicker.css'>
-</head>
-<body>
-    <nav class="navbar navbar-default     navbar-fixed-top" role="navigation">
-        <div class="container-fluid">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Upcoming Games</a>
+{% extends 'layout.html' %}
+{% block body %}
+    {% if user %}
+    <button class='btn center add'>Add new event</button>
+    <div class='form unseen'>
+        <h3>Add New Event</h3>
+        <hr>
+        <form action='add_event' class='form-horizontal' id='neweventform' role='form' method=post>
+            {{ new_event.csrf_token }}
+            <div class='form-group'>
+                <label for='neweventtitle' class='col-sm-2 control-label'>Title</label>
+                <div class='col-sm-8'>
+                    {{ new_event.title(class='form-control', id='neweventtitle') }}
+                </div>
             </div>
-
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    {% if user %}
-                    <li class='navbar-text'>Signed in as {{ user.name }}</li>
-                    <li><a href='#profile'>Edit Profile</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="logout">Sign out</a></li>
-                    {% else %}
-                    <li><a href="login">Sign in using Google</a></li>
-                    {% endif %}
-                </ul>
-            </div><!-- /.navbar-collapse -->
-        </div><!-- /.container-fluid -->
-    </nav>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class='alert alert-info'>
-        <p>{{ messages[0]|safe }}</p>
+            <div class='form-group'>
+                <label for='neweventdate' class='col-sm-2 control-label'>Date</label>
+                <div class='col-sm-8'>
+                    {{ new_event.date(class='datepicker form-control', id='0 neweventdate') }}
+                </div>
+            </div>
+            <div class='form-group'>
+                <label for='neweventtime' class='col-sm-2 control-label'>Time</label>
+                <div class='col-sm-8'>
+                    {{ new_event.time(class='timepicker form-control', id='neweventtime') }}
+                </div>
+            </div>
+            <div class='form-group'>
+                <label for='neweventplayers' class='col-sm-2 control-label'>Players</label>
+                <div class='col-sm-3'>
+                    {{ new_event.minimum(class='form-control', id='neweventplayers', size=2, maxlength=2) }}
+                </div>
+                <div class='col-sm-1 text-center'>to</div>
+                <div class='col-sm-3'>
+                    {{ new_event.maximum(class='form-control', id='neweventplayers', size=2, maxlength=2) }}
+                </div>
+            </div>
+            <div class='form-group'>
+                <label for='neweventlocation' class='col-sm-2 control-label'>Location</label>
+                <div class='col-sm-8'>
+                    {{ new_event.location(class='form-control', id='neweventlocation') }}
+                </div>
+            </div>
+            <div class='form-group'>
+                <label for='neweventhost' class='col-sm-2 control-label'>Host</label>
+                <div class='col-sm-8'>
+                    {{ new_event.host(class='form-control', id='neweventhost') }}
+                </div>
+            </div>
+            <div class='form-group'>
+                <label for='neweventdescription' class='col-sm-2 control-label'>Description</label>
+                <div class='col-sm-8'>
+                    {{ new_event.description(class='form-control', id='neweventdescription', rows=3) }}
+                </div>
+            </div>
+            <button class='btn' type=submit>Add</button>
+        </form>
+    </div>
+    {% else %}
+    <div>
+        <h1 class='text-center'>What's happening</h1>
     </div>
     {% endif %}
-    {% endwith %}
-    <div class='container'>
-        {% if user %}
-        <button class='btn center add'>Add new event</button>
-        <div class='form unseen'>
-            <h3>Add New Event</h3>
-            <hr>
-            <form action='add_event' class='form-horizontal' id='neweventform' role='form' method=post>
-                {{ new_event.csrf_token }}
+    <hr>
+    <div class='calendar'>
+        {% for event in events %}
+        <div> <!-- begin event {{ event.id }} -->
+            {% if (event.added_by == user.id) or (user.role == 'admin') %}
+            <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
+            {% endif %}
+            <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
+            <p class='small'>{{ event.description }}</p>
+            <form action='edit_event' class='form-horizontal event-editor unseen {{ event.id }}' id='editeventform' method='post'>
+                {{ edit_event.csrf_token }}
+                {{ edit_event.id(value=event.id) }}
                 <div class='form-group'>
-                    <label for='neweventtitle' class='col-sm-2 control-label'>Title</label>
+                    <label for='editeventtitle' class='col-sm-2 control-label'>Title</label>
                     <div class='col-sm-8'>
-                        {{ new_event.title(class='form-control', id='neweventtitle') }}
+                        {{ new_event.title(class='form-control', id='editeventtitle', value=event.title) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventdate' class='col-sm-2 control-label'>Date</label>
+                    <label for='editeventdate' class='col-sm-2 control-label'>Date</label>
                     <div class='col-sm-8'>
-                        {{ new_event.date(class='datepicker form-control', id='0 neweventdate') }}
+                        {{ new_event.date(class='datepicker form-control', id='pick'~event.id~'editeventdate', value=event.date) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventtime' class='col-sm-2 control-label'>Time</label>
+                    <label for='editeventtime' class='col-sm-2 control-label'>Time</label>
                     <div class='col-sm-8'>
-                        {{ new_event.time(class='timepicker form-control', id='neweventtime') }}
+                        {{ new_event.time(class='timepicker form-control', id='editeventtime', value=event.time) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventplayers' class='col-sm-2 control-label'>Players</label>
+                    <label for='editeventplayers' class='col-sm-2 control-label'>Players</label>
                     <div class='col-sm-3'>
-                        {{ new_event.minimum(class='form-control', id='neweventplayers', size=2, maxlength=2) }}
+                        {{ new_event.minimum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.minimum) }}
                     </div>
                     <div class='col-sm-1 text-center'>to</div>
                     <div class='col-sm-3'>
-                        {{ new_event.maximum(class='form-control', id='neweventplayers', size=2, maxlength=2) }}
+                        {{ new_event.maximum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.maximum) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventlocation' class='col-sm-2 control-label'>Location</label>
+                    <label for='editeventlocation' class='col-sm-2 control-label'>Location</label>
                     <div class='col-sm-8'>
-                        {{ new_event.location(class='form-control', id='neweventlocation') }}
+                        {{ new_event.location(class='form-control', id='editeventlocation', value=event.location) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventhost' class='col-sm-2 control-label'>Host</label>
+                    <label for='editeventhost' class='col-sm-2 control-label'>Host</label>
                     <div class='col-sm-8'>
-                        {{ new_event.host(class='form-control', id='neweventhost') }}
+                        {{ new_event.host(class='form-control', id='editeventhost', value=event.host) }}
                     </div>
                 </div>
                 <div class='form-group'>
-                    <label for='neweventdescription' class='col-sm-2 control-label'>Description</label>
+                    <label for='editeventdescription' class='col-sm-2 control-label'>Description</label>
                     <div class='col-sm-8'>
-                        {{ new_event.description(class='form-control', id='neweventdescription', rows=3) }}
+                        {{ new_event.description(class='form-control', id='editeventdescription', rows=3, value=event.description) }}
                     </div>
                 </div>
-                <button class='btn' type=submit>Add</button>
+                <button class='btn' type=submit>Submit</button>
             </form>
-        </div>
-        {% else %}
-        <div>
-            <h1 class='text-center'>What's happening</h1>
-        </div>
-        {% endif %}
-        <hr>
-        <div class='calendar'>
-            {% for event in events %}
-            <div> <!-- begin event {{ event.id }} -->
-                {% if (event.added_by == user.id) or (user.role == 'admin') %}
-                <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
+            <div class='event {{ event.id }}'>
+                {% if event.minimum %}
+                <p style='display:inline-block;'>Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}</p>
+                {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
+                <p style='background-color:red; display:inline-block'>▢▢▢</p>
+                {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
+                <p style='background-color:green; display:inline-block;'>▢▢▢</p>
                 {% endif %}
-                <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
-                <p class='small'>{{ event.description }}</p>
-                <form action='edit_event' class='form-horizontal event-editor unseen {{ event.id }}' id='editeventform' method='post'>
-                    {{ edit_event.csrf_token }}
-                    {{ edit_event.id(value=event.id) }}
-                    <div class='form-group'>
-                        <label for='editeventtitle' class='col-sm-2 control-label'>Title</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.title(class='form-control', id='editeventtitle', value=event.title) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventdate' class='col-sm-2 control-label'>Date</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.date(class='datepicker form-control', id='pick'~event.id~'editeventdate', value=event.date) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventtime' class='col-sm-2 control-label'>Time</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.time(class='timepicker form-control', id='editeventtime', value=event.time) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventplayers' class='col-sm-2 control-label'>Players</label>
-                        <div class='col-sm-3'>
-                            {{ new_event.minimum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.minimum) }}
-                        </div>
-                        <div class='col-sm-1 text-center'>to</div>
-                        <div class='col-sm-3'>
-                            {{ new_event.maximum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.maximum) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventlocation' class='col-sm-2 control-label'>Location</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.location(class='form-control', id='editeventlocation', value=event.location) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventhost' class='col-sm-2 control-label'>Host</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.host(class='form-control', id='editeventhost', value=event.host) }}
-                        </div>
-                    </div>
-                    <div class='form-group'>
-                        <label for='editeventdescription' class='col-sm-2 control-label'>Description</label>
-                        <div class='col-sm-8'>
-                            {{ new_event.description(class='form-control', id='editeventdescription', rows=3, value=event.description) }}
-                        </div>
-                    </div>
-                    <button class='btn' type=submit>Submit</button>
-                </form>
-                <div class='event {{ event.id }}'>
-                    {% if event.minimum %}
-                    <p style='display:inline-block;'>Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}</p>
-                    {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
-                    <p style='background-color:red; display:inline-block'>▢▢▢</p>
-                    {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
-                    <p style='background-color:green; display:inline-block;'>▢▢▢</p>
-                    {% endif %}
-                    {% elif event.maximum %}
-                    <p>Maximum capacity: {{event.maximum}}</p>
-                    {% else %}
-                </p>
-                {% endif %}
-                <p>When: {{ event.date }} at {{ event.time }}</p>
-                <p>Where: {{ event.location }}</p>
-                <p style='display: inline-block'>Who's coming?</p>
-                {% if user %}
-                <button class='btn-xs edit-players'>Edit list</button>
-                {% endif %}
-                <div class='players'>
-                    <p>{{ event.host }}, <em>host</em></p>
-                    {% if user %}
-                    {% for player in players[ event.id ] %}
-                    {% if (player.added_by == user.oauth_token) or (user.role == 'admin') %}
-                    <p><form action='remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
-                    {% else %}
-                    <p>{{ player.name }}</p>
-                    {% endif %}
-                    {% endfor %}
-                    {% endif %}
-                </div>
-                {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or not event.maximum %}
-                {% if user %}
-                <form action='add_player' class='form' method=post>
-                    {{ new_player.csrf_token }}
-                    {{ new_player.event_id(value=event.id) }}
-                    {% if (user.id in adders) or (user.id == event.added_by) %}
-                    <p class='col-sm-5'>{{ new_player.name(class='form-control') }}</p>
-                    <p class='unseen'>{{ new_player.email_changes(value=0) }}</p>
-                    <button class='btn'>Bring a Guest</button>
-                    {% else %}
-                    <p class='unseen'>{{ new_player.name(value=user.name) }}</p>
-                    <p>{{ new_player.email_changes(value=0) }} Email with updates</p>
-                    <button class='btn'>I'd like to come!</button>
-                    {% endif %}
-                </form>
-                {% endif %}
+                {% elif event.maximum %}
+                <p>Maximum capacity: {{event.maximum}}</p>
                 {% else %}
-                At capacity!
+            </p>
+            {% endif %}
+            <p>When: {{ event.date }} at {{ event.time }}</p>
+            <p>Where: {{ event.location }}</p>
+            <p style='display: inline-block'>Who's coming?</p>
+            {% if user %}
+            <button class='btn-xs edit-players'>Edit list</button>
+            {% endif %}
+            <div class='players'>
+                <p>{{ event.host }}, <em>host</em></p>
+                {% if user %}
+                {% for player in players[ event.id ] %}
+                {% if (player.added_by == user.oauth_token) or (user.role == 'admin') %}
+                <p><form action='remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
+                {% else %}
+                <p>{{ player.name }}</p>
+                {% endif %}
+                {% endfor %}
                 {% endif %}
             </div>
+            {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or (not event.maximum) %}
+            {% if (user.id|string() in adders[event.id]) or (user.id|string() == event.added_by) %}
+            <form action='add_guest' class='form form-horizontal' method=post>
+                {{ add_guest.csrf_token }}
+                {{ add_guest.event_id(value=event.id) }}
+                <div class='form-group'>
+                    <div class='col-sm-6'>
+                    {{ add_guest.name(class='form-control') }}
+                    </div>
+                    <button class='btn'>Bring a friend</button>
+                </div>
+            </form>
+            {% else %}
+            <form action='add_self' class='form' method=post>
+                {{ add_self.csrf_token }}
+                {{ add_self.event_id(value=event.id) }}
+                <button class='btn'>I'd like to come!</button>
+                <p>{{ add_self.email_changes(value=0) }} Email with updates</p>
+            </form>
+            {% endif %}
+            {% else %}
+            At capacity!
+            {% endif %}
         </div>
-        {% else %}
-        <div><em>Nothing here. Click 'Add new event' to fix that.</em></div>
-        {% endfor %}
-        <hr>
-        <div class='footer text-right'>
-            Check out the source on <a href='https://github.com/stvnrlly/scheduler'>Github</a>
-        </div>
-    </div><!-- /.container -->
-</body>
-<script src='static/js/jquery-1.11.1.min.js'></script>
-<script src="static/js/jquery-ui-1.10.4.min.js"></script>
-<script src='static/js/jquery.timepicker.min.js'></script>
-<script src="static/js/bootstrap.min.js"></script>
-<script>
-$('.add').click(function(){
-    $('.unseen').hide();
-    $('.event').show();
-    $('.edit-event').show();
-    $('.form').show('fast');
-    $(this).hide();
-});
-$('.edit-event').click(function(){
-    $('.unseen').hide();
-    $('.add').show();
-    $('.event').show();
-    $('.edit-event').show();
-    var find = $(this).attr('id');
-    $('.'+find+'.event-editor').show();
-    $('.'+find+'.event').hide();
-    $(this).hide();
-    $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
-});
-$('.edit-players').click(function(){
-    $('.remove-button').show();
-    $(this).hide();
-});
-$(function() {
-    $( '.datepicker' ).datepicker({
-        dateFormat: "MM dd, yy",
-        showOtherMonths: true,
-        selectOtherMonths: true,
+    </div>
+    {% else %}
+    <div><em>Nothing here. Click 'Add new event' to fix that.</em></div>
+    {% endfor %}
+    {% endblock %}
+
+    {% block js %}
+    <script>
+    $('.add').click(function(){
+        $('.unseen').hide();
+        $('.event').show();
+        $('.edit-event').show();
+        $('.form').show('fast');
+        $(this).hide();
     });
-});
-$('.timepicker').timepicker({
-    minTime: '5:00pm'
-});
-</script>
-</html>
+    $('.edit-event').click(function(){
+        $('.unseen').hide();
+        $('.add').show();
+        $('.event').show();
+        $('.edit-event').show();
+        var find = $(this).attr('id');
+        $('.'+find+'.event-editor').show();
+        $('.'+find+'.event').hide();
+        $(this).hide();
+        $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
+    });
+    $('.edit-players').click(function(){
+        $('.remove-button').show();
+        $(this).hide();
+    });
+    $(function() {
+        $( '.datepicker' ).datepicker({
+            dateFormat: "MM dd, yy",
+            showOtherMonths: true,
+            selectOtherMonths: true,
+        });
+    });
+    $('.timepicker').timepicker({
+        minTime: '5:00pm'
+    });
+    </script>
+    {% endblock %}

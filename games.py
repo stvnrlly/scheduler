@@ -92,13 +92,8 @@ class Player(Base):
     name = Column(String, nullable=False)
     event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
     email_changes = Column(Integer, nullable=False)
-    added_by = Column(String)
-
-    def __init__(self, name, email_changes, event_id, added_by):
-        self.name = name
-        self.email_changes = email_changes
-        self.event_id = event_id
-        self.added_by = added_by
+    added_by = Column(String, ForeignKey('users.id'))
+    added_self = Column(Integer)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -115,9 +110,12 @@ class NewEvent(Form):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
-class NewPlayer(Form):
-    name = TextField('name', [validators.Required()])
+class AddSelf(Form):
     email_changes = BooleanField('email_changes', [validators.Optional()])
+    event_id = event_id = HiddenField('event_id', [validators.Required()])
+
+class AddGuest(Form):
+    name = TextField('name', [validators.Required()])
     event_id = HiddenField('event_id', [validators.Required()])
 
 class RemovePlayer(Form):
@@ -160,18 +158,25 @@ def games():
     for player in Player.query.all():
         try:
             players[player.event_id].append(player)
-            adders[player.event_id].append(player.added_by)
         except KeyError:
             players[player.event_id] = []
             players[player.event_id].append(player)
-            adders[player.event_id] = []
-            adders[player.event_id].append(player.added_by)
+        if player.added_self==1:
+            try:
+                adders[player.event_id].append(player.added_by)
+            except KeyError:
+                adders[player.event_id] = []
+                adders[player.event_id].append(player.added_by)
     new_event = NewEvent(request.form)
-    new_player = NewPlayer(request.form)
+    add_self = AddSelf(request.form)
+    add_guest = AddGuest(request.form)
+    for player in Player.query.filter(Player.added_self == 1).all():
+        print player
+
     remove_player = RemovePlayer(request.form)
     edit_event = EditEvent(request.form)
     return render_template('index.html', user=user, events=events, players=players, adders=adders, new_event=new_event, \
-                            new_player=new_player, remove_player=remove_player, edit_event=edit_event)
+                            add_self=add_self, add_guest=add_guest, remove_player=remove_player, edit_event=edit_event)
 
 @app.route('/login')
 def login():
@@ -216,10 +221,12 @@ def get_access_token():
 @app.route('/add_event', methods=['POST'])
 def add_event():
     new_event = NewEvent(request.form)
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
     if new_event.validate_on_submit():
         event = Event(new_event.date.data, new_event.time.data, new_event.location.data, \
                 new_event.host.data, new_event.title.data, new_event.description.data, \
-                new_event.minimum.data, new_event.maximum.data, added_by=user.oauth_token)
+                new_event.minimum.data, new_event.maximum.data, added_by=user.id)
         db_session.add(event)
         db_session.commit()
         db_session.flush()
@@ -228,18 +235,19 @@ def add_event():
         flash(new_event.errors)
     return redirect('/games')
 
-@app.route('/add_player', methods=['POST'])
-def add_player():
-    new_player = NewPlayer(request.form)
+@app.route('/add_self', methods=['POST'])
+def add_self():
+    add_self = AddSelf(request.form)
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
-    if new_player.validate_on_submit():
+    print user.name
+    if add_self.validate_on_submit():
         try:
-            player = Player(new_player.name.data, new_player.email_changes.data, new_player.event_id.data, added_by=user.oauth_token)
+            player = Player(email_changes=add_self.email_changes.data, event_id=add_self.event_id.data, name=user.name, added_by=user.id, added_self=True)
             db_session.add(player)
             db_session.commit()
             db_session.flush()
-            event = Event.query.filter(Event.id == new_player.event_id.data).first()
+            event = Event.query.filter(Event.id == add_self.event_id.data).first()
             text = ''
             for d in event.title.split():
                 text += d
@@ -261,7 +269,43 @@ def add_player():
         except exc.SQLAlchemyError:
             flash("You've already added that person! Try another name.")
     else:
-        flash(new_player.errors)
+        flash(add_self.errors)
+    return redirect('/games')
+
+@app.route('/add_guest', methods=['POST'])
+def add_guest():
+    add_guest = AddGuest(request.form)
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
+    if add_guest.validate_on_submit():
+        try:
+            player = Player(name=add_guest.name.data, event_id=add_guest.event_id.data, email_changes=False, added_by=user.id, added_self=False)
+            db_session.add(player)
+            db_session.commit()
+            db_session.flush()
+            event = Event.query.filter(Event.id == add_guest.event_id.data).first()
+            text = ''
+            for d in event.title.split():
+                text += d
+                text += '+'
+            text = text[:len(text)-1]
+            date = datetime.strptime(event.date + event.time, '%Y-%m-%d%I:%M%p')
+            date = datetime.strftime(date, '%Y%m%dT%H%M%S')
+            details = ''
+            for d in event.description.split():
+                details += d
+                details += '+'
+            details = details[:len(details)-1]
+            location = ''
+            for d in event.location.split():
+                location += d
+                location += '+'
+            location = location[:len(location)-1]
+            flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
+        except exc.SQLAlchemyError:
+            flash("You've already added that person! Try another name.")
+    else:
+        flash(add_guest.errors)
     return redirect('/games')
 
 @app.route('/remove_player', methods=['POST'])
@@ -296,6 +340,15 @@ def edit_event():
     else:
         flash(edit_event.errors)
     return redirect('/games')
+
+@app.route('/profile', methods=['GET'])
+def profile():
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
+    if user:
+        return render_template('profile.html', user=user)
+    else:
+        return redirect('/games')
 
 # Run the application
 
