@@ -67,17 +67,6 @@ class Event(Base):
     maximum = Column(Integer)
     added_by = Column(String)
 
-    def __init__(self, date, time, location, host, title, description, minimum, maximum, added_by):
-        self.date = date
-        self.time = time
-        self.location = location
-        self.host = host
-        self.title = title
-        self.description = description
-        self.minimum = minimum
-        self.maximum = maximum
-        self.added_by = added_by
-
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -104,7 +93,6 @@ class NewEvent(Form):
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
-    host = TextField('host', [validators.Required()])
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -126,7 +114,6 @@ class EditEvent(Form):
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
-    host = TextField('host', [validators.Required()])
     title = TextField('title', [validators.Optional()])
     description = TextAreaField('description', [validators.Optional()])
     minimum = TextField('minimum', [validators.Optional()])
@@ -170,15 +157,15 @@ def games():
             except KeyError:
                 adders[player.event_id] = []
                 adders[player.event_id].append(player.added_by)
+    names = {}
+    for u in User.query.all():
+        names[u.id] = u.name
     new_event = NewEvent(request.form)
     add_self = AddSelf(request.form)
     add_guest = AddGuest(request.form)
-    for player in Player.query.filter(Player.added_self == 1).all():
-        print player
-
     remove_player = RemovePlayer(request.form)
     edit_event = EditEvent(request.form)
-    return render_template('index.html', user=user, events=events, players=players, adders=adders, new_event=new_event, \
+    return render_template('index.html', user=user, events=events, players=players, adders=adders, names=names, new_event=new_event, \
                             add_self=add_self, add_guest=add_guest, remove_player=remove_player, edit_event=edit_event)
 
 @app.route('/login')
@@ -195,7 +182,6 @@ def logout():
 @google.authorized_handler
 def authorized(resp):
     access_token = resp['access_token']
-#    session['access_token'] = access_token, ''
     headers = {'Authorization': 'OAuth '+access_token}
     req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
                   None, headers)
@@ -227,9 +213,9 @@ def add_event():
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
     if new_event.validate_on_submit():
-        event = Event(new_event.date.data, new_event.time.data, new_event.location.data, \
-                new_event.host.data, new_event.title.data, new_event.description.data, \
-                new_event.minimum.data, new_event.maximum.data, added_by=user.id)
+        event = Event(date=new_event.date.data, time=new_event.time.data, location=new_event.location.data, \
+                host=user.name, title=new_event.title.data, description=new_event.description.data, \
+                minimum=new_event.minimum.data, maximum=new_event.maximum.data, added_by=user.id)
         db_session.add(event)
         db_session.commit()
         db_session.flush()
@@ -243,7 +229,6 @@ def add_self():
     add_self = AddSelf(request.form)
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
-    print user.name
     if add_self.validate_on_submit():
         try:
             player = Player(email_changes=add_self.email_changes.data, event_id=add_self.event_id.data, name=user.name, added_by=user.id, added_self=True)
@@ -332,7 +317,6 @@ def edit_event():
         event.date = edit_event.date.data
         event.time = edit_event.time.data
         event.location = edit_event.location.data
-        event.host = edit_event.host.data
         event.title = edit_event.title.data
         event.description = edit_event.description.data
         event.minimum = edit_event.minimum.data

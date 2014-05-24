@@ -28,6 +28,11 @@ td {
     padding-right: 10px;
 }
 
+.description {
+    border: 1px solid black;
+    padding: 5px;
+}
+
 .footer {
     color: #777;
 }
