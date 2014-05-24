@@ -1,0 +1,53 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div>
+    <button class='btn pull-right start-edit'>Edit info</button>
+    <h1>{{ user.name }}</h1>
+    <hr>
+    <div class='profile-info'>
+        <div class='row'>
+            <div class='col-sm-4'>Name:</div>
+            <div class='col-sm-4'>{{ user.name }}</div>
+        </div>
+        <div class='row'>
+            <div class='col-sm-4'>Email (for notifications):</div>
+            <div class='col-sm-4'>{{ user.email }}</div>
+        </div>
+    </div>
+    <form action='edit_user' class='edit-user unseen form-horizontal' id='edituserform' method=post>
+        {{ edit_user.csrf_token }}
+        <div class='form-group'>
+            <label for='editusername' class='col-sm-2 control-label'>Name</label>
+            <div class='col-sm-6'>
+                {{ edit_user.name(class='form-control', id='editusername', value=user.name) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='edituseremail' class='col-sm-2 control-label'>Email</label>
+            <div class='col-sm-6'>
+                {{ edit_user.email(class='form-control', id='edituseremail', value=user.email) }}
+            </div>
+        </div>
+        <button class='btn' type=submit>Change info</button>
+    </form>
+    <div>
+        <h2>Your Events</h2>
+        {% for e in profile_events %}
+        <hr>
+        <div>
+            <div><h3>{{ e.date }}</h3></div>
+            <div>{{ e.location }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+$('.start-edit').click(function(){
+    $(this).hide();
+    $('.profile-info').hide();
+    $('.edit-user').show();
+});
+</script>
+{% endblock %}

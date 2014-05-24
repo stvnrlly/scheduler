@@ -63,7 +63,7 @@
     {% endif %}
     <hr>
     <div class='calendar'>
-        {% for event in events %}
+        {% for event in events|sort(attribute='date') %}
         <div> <!-- begin event {{ event.id }} -->
             {% if (event.added_by == user.id) or (user.role == 'admin') %}
             <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
@@ -180,41 +180,41 @@
     {% else %}
     <div><em>Nothing here. Click 'Add new event' to fix that.</em></div>
     {% endfor %}
-    {% endblock %}
+{% endblock %}
 
-    {% block js %}
-    <script>
-    $('.add').click(function(){
-        $('.unseen').hide();
-        $('.event').show();
-        $('.edit-event').show();
-        $('.form').show('fast');
-        $(this).hide();
+{% block js %}
+<script>
+$('.add').click(function(){
+    $('.unseen').hide();
+    $('.event').show();
+    $('.edit-event').show();
+    $('.form').show('fast');
+    $(this).hide();
+});
+$('.edit-event').click(function(){
+    $('.unseen').hide();
+    $('.add').show();
+    $('.event').show();
+    $('.edit-event').show();
+    var find = $(this).attr('id');
+    $('.'+find+'.event-editor').show();
+    $('.'+find+'.event').hide();
+    $(this).hide();
+    $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
+});
+$('.edit-players').click(function(){
+    $('.remove-button').show();
+    $(this).hide();
+});
+$(function() {
+    $( '.datepicker' ).datepicker({
+        dateFormat: "MM dd, yy",
+        showOtherMonths: true,
+        selectOtherMonths: true,
     });
-    $('.edit-event').click(function(){
-        $('.unseen').hide();
-        $('.add').show();
-        $('.event').show();
-        $('.edit-event').show();
-        var find = $(this).attr('id');
-        $('.'+find+'.event-editor').show();
-        $('.'+find+'.event').hide();
-        $(this).hide();
-        $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
-    });
-    $('.edit-players').click(function(){
-        $('.remove-button').show();
-        $(this).hide();
-    });
-    $(function() {
-        $( '.datepicker' ).datepicker({
-            dateFormat: "MM dd, yy",
-            showOtherMonths: true,
-            selectOtherMonths: true,
-        });
-    });
-    $('.timepicker').timepicker({
-        minTime: '5:00pm'
-    });
-    </script>
-    {% endblock %}
+});
+$('.timepicker').timepicker({
+    minTime: '5:00pm'
+});
+</script>
+{% endblock %}

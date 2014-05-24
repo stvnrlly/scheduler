@@ -132,6 +132,10 @@ class EditEvent(Form):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
+class EditUser(Form):
+    name = TextField('name')
+    email = TextField('email')
+
 # Make sure to close the database properly
 
 @app.after_request
@@ -152,7 +156,6 @@ def games():
         if date >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
             events.append(event)
         event.date = datetime.strftime(date, '%B %d, %Y')
-    events = sorted(events, key=lambda event: event.date)
     players = {}
     adders = {}
     for player in Player.query.all():
@@ -343,12 +346,39 @@ def edit_event():
 
 @app.route('/profile', methods=['GET'])
 def profile():
+    edit_user = EditUser(request.form)
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
     if user:
-        return render_template('profile.html', user=user)
+        profile_events = {}
+        for player in Player.query.all():
+            if player.added_by == str(user.id) and player.added_self == 1:
+                e = Event.query.filter(Event.id == player.event_id).first()
+                e.date = datetime.strftime(datetime.strptime(e.date, '%Y-%m-%d'), '%B %d, %Y')
+                profile_events[e] = 'guest'
+        for event in Event.query.all():
+            if event.added_by == str(user.id):
+                e = Event.query.filter(Event.id == event.id).first()
+                e.date = datetime.strftime(datetime.strptime(e.date, '%Y-%m-%d'), '%B %d, %Y')
+                profile_events[e] = 'host'
+        events = Event.query.all()
+        return render_template('profile.html', user=user, edit_user=edit_user, profile_events=profile_events, events=events)
     else:
         return redirect('/games')
+
+@app.route('/edit_user', methods=['GET', 'POST'])
+def edit_user():
+    edit_user = EditUser(request.form)
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
+    if edit_user.validate_on_submit():
+        user.name = edit_user.name.data
+        user.email = edit_user.email.data
+        db_session.commit()
+        db_session.flush()
+    else:
+        flash(edit_event.errors)
+    return redirect('/profile')
 
 # Run the application
 
