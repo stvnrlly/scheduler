@@ -1,7 +1,6 @@
 body {
     padding-top: 70px;
     padding-bottom: 20px;
-    background-color: #E6EDE6;
 }
 
 td {
@@ -29,7 +28,6 @@ td {
 }
 
 .description {
-    border: 1px solid black;
     padding: 5px;
 }
 

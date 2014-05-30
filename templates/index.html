@@ -132,7 +132,7 @@
             <p>{{ event.host }}, <em>host</em></p>
             {% if user %}
             {% for player in players[ event.id ] %}
-            {% if (player.added_by == user.id) or (user.role == 'admin') %}
+            {% if (player.added_by == user.id|string()) or (user.role == 'admin') %}
             <p><form action='remove_player' method='post'>{{ player.name }}{% if player.added_self == 0 %}, <em>guest</em> of {{ names[player.added_by|int()] }}{% endif %} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
             {% else %}
             <p>{{ player.name }}{% if player.added_self == 0 %}, guest of {{ names[player.added_by|int()] }}{% endif %}</p>
@@ -149,15 +149,15 @@
                 <div class='col-sm-6'>
                     {{ add_guest.name(class='form-control') }}
                 </div>
-                <button class='btn'>Bring a friend</button>
+                <button class='btn' name='btn' value='other'>Bring a friend</button>
             </div>
         </form>
-        {% else %}
-        <form action='add_self' class='form' method=post>
-            {{ add_self.csrf_token }}
-            {{ add_self.event_id(value=event.id) }}
-            <button class='btn'>I'd like to come!</button>
-            <p>{{ add_self.email_changes(value=0) }} Email with updates</p>
+        {% elif user %}
+        <form action='add_guest' class='form' method=post>
+            {{ add_guest.csrf_token }}
+            {{ add_guest.event_id(value=event.id) }}
+            <button class='btn' name='btn' value='self'>I'd like to come!</button>
+            <p>{{ add_guest.email_changes(value=0) }} Email with updates</p>
         </form>
         {% endif %}
         {% else %}
