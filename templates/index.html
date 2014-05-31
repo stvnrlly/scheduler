@@ -126,14 +126,14 @@
         <p>Where: {{ event.location }}</p>
         <p style='display: inline-block'>Who's coming?</p>
         {% if user %}
-        <button class='btn-xs edit-players'>Edit list</button>
+        <button class='btn-xs edit-players' id={{ event.id }}>Edit list</button>
         {% endif %}
         <div class='players'>
             <p>{{ event.host }}, <em>host</em></p>
             {% if user %}
             {% for player in players[ event.id ] %}
             {% if (player.added_by == user.id|string()) or (user.role == 'admin') %}
-            <p><form action='remove_player' method='post'>{{ player.name }}{% if player.added_self == 0 %}, <em>guest</em> of {{ names[player.added_by|int()] }}{% endif %} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
+            <p><form action='remove_player' method='post'>{{ player.name }}{% if player.added_self == 0 %}, <em>guest</em> of {{ names[player.added_by|int()] }}{% endif %} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' id={{ event.id }} type=submit>x</button></span></form></p>
             {% else %}
             <p>{{ player.name }}{% if player.added_self == 0 %}, guest of {{ names[player.added_by|int()] }}{% endif %}</p>
             {% endif %}
@@ -176,6 +176,7 @@ $('.add').click(function(){
     $('.unseen').hide();
     $('.event').show();
     $('.edit-event').show();
+    $('.edit-players').show();
     $('.form').show('fast');
     $(this).hide();
 });
@@ -184,6 +185,7 @@ $('.edit-event').click(function(){
     $('.add').show();
     $('.event').show();
     $('.edit-event').show();
+    $('.edit-players').show();
     var find = $(this).attr('id');
     $('.'+find+'.event-editor').show();
     $('.'+find+'.event').hide();
@@ -191,7 +193,13 @@ $('.edit-event').click(function(){
     $('.'+find+'.event-editor').find('textarea').text( $('.'+find+'.event-editor').find('textarea').attr('value') );
 });
 $('.edit-players').click(function(){
-    $('.remove-button').show();
+    $('.unseen').hide();
+    $('.add').show();
+    $('.event').show();
+    $('.edit-event').show();
+    $('.edit-players').show();
+    var find = $(this).attr('id');
+    $('.'+find+' .remove-button').show();
     $(this).hide();
 });
 $(function() {
