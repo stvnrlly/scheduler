@@ -28,15 +28,23 @@ exec(compile(open("creds.py").read(), "creds.py", 'exec'))
 REDIRECT_URI = '/oauth2callback'
 
 # Load default config and override config from an environment variable
+# Mail settings are stored in creds.py
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'games.db'),
     DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default',
-    TESTING=True,
+    MAIL_SERVER=MAIL_SERVER,
+    MAIL_PORT=MAIL_PORT,
+    MAIL_USE_TLS=MAIL_USE_TLS,
+    MAIL_USE_SSL=MAIL_USE_SSL,
+    MAIL_USERNAME=MAIL_USERNAME,
+    MAIL_PASSWORD=MAIL_PASSWORD,
 ))
 app.config.from_envvar('GAMES_SETTINGS', silent=True)
+
+mail = Mail(app)
 
 # Set up the database
 
@@ -77,6 +85,7 @@ class User(Base):
     role = Column(String)
     email = Column(String, unique=True)
     oauth_token = Column(String)
+    notify = Column(Integer)
     events = relationship('Event', backref='player')
 
 class Player(Base):
@@ -123,6 +132,7 @@ class EditEvent(Form):
 class EditUser(Form):
     name = TextField('name')
     email = TextField('email')
+    notify = BooleanField('notify', [validators.Optional()])
 
 # Make sure to close the database properly
 
@@ -144,6 +154,7 @@ def games():
         if date >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
             events.append(event)
         event.date = datetime.strftime(date, '%B %d, %Y')
+    events = sorted(events, key=lambda event: event.date, reverse=True)
     players = {}
     adders = {}
     for player in Player.query.all():
@@ -181,6 +192,15 @@ def add_event():
         db_session.commit()
         db_session.flush()
         flash('New event was successfully created')
+        users = User.query.all()
+        date = datetime.strftime(datetime.strptime(event.date, '%Y-%m-%d'), '%B %d, %Y')
+        for u in users:
+            if u.notify == 1:
+                msg = Message("New gametimes!",
+                        sender="Gamebot",
+                        recipients=[u.email],
+                        body="There's a new game event!\n\n"+date+" at "+event.time+"\n\nIt's hosted by "+event.host+" at "+event.location+"\n\nAbout it: "+event.description+"\n\nGo to www.stvnrlly.com/games to check it out.")
+                mail.send(msg)
     else:
         flash(new_event.errors)
     return redirect('/games')
@@ -218,7 +238,13 @@ def add_guest():
                 location += '+'
             location = location[:len(location)-1]
             flash("Success! <a href='https://www.google.com/calendar/render?action=TEMPLATE&text="+text+"&dates="+date+"/"+date+"&details="+details+"&location="+location+"&sf=true&output=xml'>Add to Google Calendar?</a>")
-
+            notify = User.query.filter(User.id == event.added_by).first()
+            date = datetime.strftime(datetime.strptime(event.date, '%Y-%m-%d'), '%B %d, %Y')
+            msg = Message("You have a new guest!",
+                    sender="Gamebot",
+                    recipients=[notify.email],
+                    body=player.name+" is coming to "+event.title+" on "+date+"!")
+            mail.send(msg)
         except exc.SQLAlchemyError:
             flash("You've already added that person! Try another name.")
     else:
@@ -289,6 +315,7 @@ def edit_user():
     if edit_user.validate_on_submit():
         user.name = edit_user.name.data
         user.email = edit_user.email.data
+        user.notify = edit_user.notify.data
         db_session.commit()
         db_session.flush()
     else:
@@ -325,7 +352,7 @@ def authorized(resp):
     info = json.loads(res.read())
     user = User.query.filter(User.oauth_token == info['id']).first()
     if user == None:
-        user = User(name = info['name'], email = info['email'], oauth_token = info['id'], role='user')
+        user = User(name = info['name'], email = info['email'], oauth_token = info['id'], role='user', notify=0)
         db_session.add(user)
         db_session.commit()
         db_session.flush()

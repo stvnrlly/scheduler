@@ -28,6 +28,19 @@
                 {{ edit_user.email(class='form-control', id='edituseremail', value=user.email) }}
             </div>
         </div>
+          <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+        <div class='checkbox'>
+            <label>
+                {% if user.notify == 1 %}
+                {{ edit_user.notify(type='checkbox', checked='yes') }} Get notifications
+                {% else %}
+                {{ edit_user.notify(type='checkbox') }} Get notifications
+                {% endif %}
+            <label>
+        </div>
+    </div>
+</div>
         <button class='btn' type=submit>Change info</button>
     </form>
     <div>
@@ -35,8 +48,12 @@
         {% for e in profile_events %}
         <hr>
         <div>
-            <div><h3>{{ e.date }}</h3></div>
-            <div>{{ e.location }}</div>
+            <p>
+                {% if profile_events[e] == 'host' %}<code class='pull-right'>host</code>{% endif %}
+                <h3>{{ e.date }}</h3>
+            </p>
+            <p>{{ e.location }}</p>
+            <p>{{ e.description }}</p>
         </div>
         {% endfor %}
     </div>

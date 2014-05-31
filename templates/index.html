@@ -56,7 +56,7 @@
 </div>
 {% endif %}
 <div class='calendar'>
-    {% for event in events|sort(attribute='date') %}
+    {% for event in events %}
     <hr>
     <div> <!-- begin event {{ event.id }} -->
         {% if (event.added_by == user.id) or (user.role == 'admin') %}
