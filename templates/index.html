@@ -133,9 +133,9 @@
             {% if user %}
             {% for player in players[ event.id ] %}
             {% if (player.added_by == user.id|string()) or (user.role == 'admin') %}
-            <p><form action='remove_player' method='post'>{{ player.name }}{% if player.added_self == 0 %}, <em>guest</em> of {{ names[player.added_by|int()] }}{% endif %} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' id={{ event.id }} type=submit>x</button></span></form></p>
+            <p><form action='remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' id={{ event.id }} type=submit>x</button></span></form></p>
             {% else %}
-            <p>{{ player.name }}{% if player.added_self == 0 %}, guest of {{ names[player.added_by|int()] }}{% endif %}</p>
+            <p>{{ player.name }}</p>
             {% endif %}
             {% endfor %}
             {% endif %}
