@@ -13,6 +13,10 @@
             <div class='col-sm-4'>Email (for notifications):</div>
             <div class='col-sm-4'>{{ user.email }}</div>
         </div>
+        <div class='row'>
+            <div class='col-sm-4'>Notifications on?</div>
+            <div class='col-sm-4'>{% if user.notify == 1 %}Yes{% else %}No{% endif %}</div>
+        </div>
     </div>
     <form action='edit_user' class='edit-user unseen form-horizontal' id='edituserform' method=post>
         {{ edit_user.csrf_token }}
@@ -49,11 +53,16 @@
         <hr>
         <div>
             <p>
-                {% if profile_events[e] == 'host' %}<code class='pull-right'>host</code>{% endif %}
+                {% if profile_events[e] == 'host' %}<span class='badge pull-right'>host</span>{% endif %}
                 <h3>{{ e.date }}</h3>
             </p>
             <p>{{ e.location }}</p>
             <p>{{ e.description }}</p>
+        </div>
+        {% else %}
+        <hr>
+        <div>
+            <p>Nothing yet! Check out <a href='/games'>the main page</a> to see what's happening.</p>
         </div>
         {% endfor %}
     </div>
