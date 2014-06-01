@@ -111,7 +111,7 @@
         </form>
         <div class='event {{ event.id }}'>
             {% if event.minimum %}
-            <p style='display:inline-block;'>Players needed: {{event.minimum}}{% endif %}{% if event.maximum and event.minimum %}-{{event.maximum}}</p>
+            <p style='display:inline-block;'>Players needed: {{event.minimum}}{% if event.maximum and event.minimum %}-{{event.maximum}}{% endif %}</p>
             {% if (players[ event.id ]|length + 1) < event.minimum|int() %}
             <span class='glyphicon glyphicon-remove'></span>
             {% elif 0 < event.minimum|int() <= (players[event.id]|length + 1) %}
@@ -130,7 +130,6 @@
         {% endif %}
         <div class='players'>
             <p>{{ event.host }}, <em>host</em></p>
-            {% if user %}
             {% for player in players[ event.id ] %}
             {% if (player.added_by == user.id|string()) or (user.role == 'admin') %}
             <p><form action='remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' id={{ event.id }} type=submit>x</button></span></form></p>
@@ -138,7 +137,6 @@
             <p>{{ player.name }}</p>
             {% endif %}
             {% endfor %}
-            {% endif %}
         </div>
         {% if (event.maximum|int() > (players[ event.id ]|length + 1)) or (not event.maximum) %}
         {% if (user.id|string() in adders[event.id]) or (user.id|string() == event.added_by) %}
