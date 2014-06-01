@@ -31,7 +31,7 @@ REDIRECT_URI = '/oauth2callback'
 # Mail settings are stored in creds.py
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'games.db'),
-    DEBUG=False,
+    DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default',
@@ -154,7 +154,7 @@ def games():
         if date >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
             events.append(event)
         event.date = datetime.strftime(date, '%B %d, %Y')
-    events = sorted(events, key=lambda event: event.date, reverse=True)
+    events = sorted(events, key=lambda x: datetime.strptime(x.date, '%B %d, %Y'), reverse=False)
     players = {}
     adders = {}
     for player in Player.query.all():
