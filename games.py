@@ -31,7 +31,7 @@ REDIRECT_URI = '/oauth2callback'
 # Mail settings are stored in creds.py
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'games.db'),
-    DEBUG=True,
+    DEBUG=False,
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default',
@@ -362,6 +362,16 @@ def authorized(resp):
 @google.tokengetter
 def get_access_token():
     return session.get('access_token')
+
+# Error pages
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def something_wrong(e):
+    return render_template('500.html'), 500
 
 # Run the application
 

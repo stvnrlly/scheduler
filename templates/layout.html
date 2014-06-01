@@ -1,7 +1,7 @@
 <!doctype html>
 <html language='en'>
 <head>
-    <title>Upcoming Games</title>
+    <title>{%block title %}Upcoming Games{% endblock %}</title>
     <link rel='stylesheet' href='static/css/bootstrap.min.css'>
     <link rel='stylesheet' href='static/css/style.css'>
     <link rel="stylesheet" href="static/css/jquery-ui-1.10.4.min.css">
@@ -48,7 +48,7 @@
         {% block body %}{% endblock %}
         <hr>
         <div class='footer text-right'>
-            Check out the source on <a href='https://github.com/stvnrlly/scheduler'>Github</a>
+            <small>Check out the source on <a href='https://github.com/stvnrlly/scheduler'>Github</a><small>
         </div>
     </div><!-- /.container -->
 </body>
