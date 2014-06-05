@@ -23,9 +23,8 @@ oauth = OAuth()
 mail = Mail(app)
 
 exec(compile(open("creds.py").read(), "creds.py", 'exec'))
-# GOOGLE_CLIENT_ID stored in creds.py
-# GOOGLE_CLIENT_SECRET stored in creds.py
-REDIRECT_URI = '/oauth2callback'
+# OAuth credentials stored in creds.py
+
 
 # Load default config and override config from an environment variable
 # Mail settings are stored in creds.py
@@ -328,13 +327,17 @@ def edit_user():
 def login():
     callback=url_for('authorized', _external=True)
     return google.authorize(callback=callback)
+    # To set callback URL directly, set CALLBACK in creds.py
+    # and comment out above code
+    #
+    # return google.authorize(CALLBACK)
 
 @app.route('/logout')
 def logout():
     session.pop('user')
-    return redirect(url_for('games'))
+    return redirect('/games')
 
-@app.route(REDIRECT_URI)
+@app.route('/oauth2callback')
 @google.authorized_handler
 def authorized(resp):
     access_token = resp['access_token']
@@ -347,7 +350,7 @@ def authorized(resp):
         if e.code == 401:
             # Unauthorized - bad token
             session.pop('access_token', None)
-            return redirect(url_for('login'))
+            return redirect('/login')
         user = res.read()
     info = json.loads(res.read())
     user = User.query.filter(User.oauth_token == info['id']).first()
@@ -357,7 +360,7 @@ def authorized(resp):
         db_session.commit()
         db_session.flush()
     session['user'] = user.id
-    return redirect(url_for('games'))
+    return redirect('/games')
 
 @google.tokengetter
 def get_access_token():

@@ -1,6 +1,10 @@
 {% extends 'layout.html' %}
 {% block body %}
+<div>
+    <h1 class='text-center'>What's happening</h1>
+</div>
 {% if user %}
+<hr>
 <button class='btn center add'>Host a new event</button>
 <div class='form unseen'>
     <h3>Add New Event</h3>
@@ -50,16 +54,12 @@
         <button class='btn' type=submit>Add</button>
     </form>
 </div>
-{% else %}
-<div>
-    <h1 class='text-center'>What's happening</h1>
-</div>
 {% endif %}
 <div class='calendar'>
     {% for event in events %}
     <hr>
     <div> <!-- begin event {{ event.id }} -->
-        {% if (event.added_by == user.id) or (user.role == 'admin') %}
+        {% if (event.added_by == user.id|string()) or (user.role == 'admin') %}
         <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
         {% endif %}
         <h2>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</h2>
@@ -157,6 +157,8 @@
             <button class='btn' name='btn' value='self'>I'd like to come!</button>
             <p>{{ add_guest.email_changes(value=0) }} Email with updates</p>
         </form>
+        {% else %}
+        <p><a class='btn btn-default' role='button' href='login'>Sign in</a> to RSVP</p>
         {% endif %}
         {% else %}
         At capacity!
