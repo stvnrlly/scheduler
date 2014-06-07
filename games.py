@@ -8,7 +8,8 @@ from flask.ext.wtf import Form
 from flask_wtf.csrf import CsrfProtect
 from flask_oauth import OAuth
 from flask.ext.mail import Mail, Message
-from flask.ext.admin import Admin
+from flask.ext.admin import Admin, BaseView, expose
+from flask.ext.admin.contrib.sqla import ModelView
 from wtforms import BooleanField, TextField, TextAreaField, PasswordField, \
     HiddenField, validators
 from wtforms.ext.dateutil.fields import DateField, DateTimeField
@@ -20,9 +21,11 @@ from sqlalchemy.ext.declarative import declarative_base
 csrf = CsrfProtect()
 app = Flask(__name__)
 csrf.init_app(app)
+
 oauth = OAuth()
 mail = Mail(app)
 admin = Admin(app)
+
 
 exec(compile(open("creds.py").read(), "creds.py", 'exec'))
 # OAuth credentials stored in creds.py
@@ -32,7 +35,7 @@ exec(compile(open("creds.py").read(), "creds.py", 'exec'))
 # Mail settings are stored in creds.py
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'games.db'),
-    DEBUG=False,
+    DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default',
@@ -88,6 +91,18 @@ class User(Base):
     oauth_token = Column(String)
     notify = Column(Integer)
     events = relationship('Event', backref='player')
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.id)
 
 class Player(Base):
     __tablename__ = 'players'
@@ -367,6 +382,19 @@ def authorized(resp):
 @google.tokengetter
 def get_access_token():
     return session.get('access_token')
+
+# Admin pages
+
+class Data(ModelView):
+
+    def is_accessible(self):
+        user = session.get('user')
+        user = User.query.filter(User.id == user).first()
+        return user.role == 'admin'
+
+admin.add_view(Data(User, db_session))
+admin.add_view(Data(Player, db_session))
+admin.add_view(Data(Event, db_session))
 
 # Error pages
 
