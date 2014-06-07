@@ -8,6 +8,7 @@ from flask.ext.wtf import Form
 from flask_wtf.csrf import CsrfProtect
 from flask_oauth import OAuth
 from flask.ext.mail import Mail, Message
+from flask.ext.admin import Admin
 from wtforms import BooleanField, TextField, TextAreaField, PasswordField, \
     HiddenField, validators
 from wtforms.ext.dateutil.fields import DateField, DateTimeField
@@ -21,6 +22,7 @@ app = Flask(__name__)
 csrf.init_app(app)
 oauth = OAuth()
 mail = Mail(app)
+admin = Admin(app)
 
 exec(compile(open("creds.py").read(), "creds.py", 'exec'))
 # OAuth credentials stored in creds.py
@@ -30,7 +32,7 @@ exec(compile(open("creds.py").read(), "creds.py", 'exec'))
 # Mail settings are stored in creds.py
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'games.db'),
-    DEBUG=True,
+    DEBUG=False,
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default',
@@ -370,11 +372,13 @@ def get_access_token():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    user = session['user']
+    return render_template('404.html', user=user), 404
 
 @app.errorhandler(500)
 def something_wrong(e):
-    return render_template('500.html'), 500
+    user = session['user']
+    return render_template('500.html', user=user), 500
 
 # Run the application
 

@@ -25,7 +25,6 @@
             <div class="collapse navbar-collapse">
                 {% if user %}
                 <ul class="nav navbar-nav">
-
                     <li class='navbar-text'>Signed in as {{ user.name }}</li>
                     <li><a href='profile'>Edit Profile</a></li>
                 </ul>
@@ -33,7 +32,10 @@
                     <li><a href="logout">Sign out</a></li>
                 </ul>
                 {% else %}
-                <a href="login" class='btn btn-default navbar-btn' role='button'>Sign in using Google</a>
+                <ul class="nav navbar-nav">
+                    <li><span><a href="login" class='btn btn-default navbar-btn' role='button'>Sign in using Google</a></span></li>
+                    <li class="navbar-text google" data-toggle="tooltip" data-placement="bottom">Why Google?</li>
+                </ul>
                 {% endif %}
             </div><!-- /.navbar-collapse -->
         </div><!-- /.container-fluid -->
@@ -61,6 +63,9 @@
 <script>
 $('.nav li').hover(function() {
     $(this).toggleClass("active");
+});
+$('.google').popover({
+    content:"Using Google for login allows me to avoid storing usernames and password, which is a security risk. Google doesn't get any of your personal information."
 });
 </script>
 </html>
