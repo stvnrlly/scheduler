@@ -1,0 +1,120 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div>
+    {% if (event.added_by == user.id|string()) or (user.role == 'admin') %}
+    <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
+    {% endif %}
+    <h1>{{ event.title }}</h1>
+    <hr>
+    <form action='/edit_event' class='form-horizontal event-editor unseen {{ event.id }}' id='editeventform' method='post'>
+        {{ edit_event.csrf_token }}
+        {{ edit_event.id(value=event.id) }}
+        <div class='form-group'>
+            <label for='editeventtitle' class='col-sm-2 control-label'>Title</label>
+            <div class='col-sm-8'>
+                {{ edit_event.title(class='form-control', id='editeventtitle', value=event.title) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='editeventdate' class='col-sm-2 control-label'>Date</label>
+            <div class='col-sm-8'>
+                {{ edit_event.date(class='datepicker form-control', id='pick'~event.id~'editeventdate', value=event.date) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='editeventtime' class='col-sm-2 control-label'>Time</label>
+            <div class='col-sm-8'>
+                {{ edit_event.time(class='timepicker form-control', id='editeventtime', value=event.time) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='editeventplayers' class='col-sm-2 control-label'>Players</label>
+            <div class='col-sm-3'>
+                {{ edit_event.minimum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.minimum) }}
+            </div>
+            <div class='col-sm-1 text-center'>to</div>
+            <div class='col-sm-3'>
+                {{ edit_event.maximum(class='form-control', id='editeventplayers', size=2, maxlength=2, value=event.maximum) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='editeventlocation' class='col-sm-2 control-label'>Location</label>
+            <div class='col-sm-8'>
+                {{ edit_event.location(class='form-control', id='editeventlocation', value=event.location) }}
+            </div>
+        </div>
+        <div class='form-group'>
+            <label for='editeventdescription' class='col-sm-2 control-label'>Description</label>
+            <div class='col-sm-8'>
+                {{ edit_event.description(class='form-control', id='editeventdescription', rows=3, value=event.description) }}
+            </div>
+        </div>
+        <button class='btn' type=submit>Submit</button>
+    </form>
+    <div class='event'>
+        {% if event.description %}
+        <h3>Description</h2>
+        {% endif %}
+        <p>{{ event.description }}</p>
+        <h3>Time</h2>
+        <p>{{ event.date }} at {{ event.time }}</p>
+        <h3 style='display: inline-block'>People so far</h2>
+        {% if user %}
+        <button class='btn-xs edit-players'>Edit list</button>
+        {% endif %}
+        <p>{{ event.host }}, <em>host</em>
+        {% for player in players %}
+        {% if (player.added_by == user.id|string()) or (user.role == 'admin') %}
+        <p><form action='/remove_player' method='post'>{{ player.name }} <span class='remove-button unseen'>{{ remove_player.csrf_token }}{{ remove_player.id(value=player.id) }}<button class='btn-xs' type=submit>x</button></span></form></p>
+        {% else %}
+        <p>{{ player.name }}</p>
+        {% endif %}
+        {% endfor %}
+        {% if (event.maximum|int() > (players|length + 1)) or (not event.maximum) %}
+        {% if (user.id|string() in adders) or (user.id|string() == event.added_by) %}
+        <form action='/add_guest' class='form form-horizontal' method=post>
+            {{ add_guest.csrf_token }}
+            {{ add_guest.event_id(value=event.id) }}
+            <div class='form-group'>
+                <div class='col-sm-6'>
+                    {{ add_guest.name(class='form-control') }}
+                </div>
+                <button class='btn' name='btn' value='other'>Bring a friend</button>
+            </div>
+        </form>
+        {% elif user %}
+        <form action='/add_guest' class='form' method=post>
+            {{ add_guest.csrf_token }}
+            {{ add_guest.event_id(value=event.id) }}
+            <button class='btn' name='btn' value='self'>I'd like to come!</button>
+            <p>{{ add_guest.email_changes(value=0) }} Email with updates</p>
+        </form>
+        {% else %}
+        <p><a class='btn btn-default' role='button' href='login'>Sign in</a> to RSVP</p>
+        {% endif %}
+        {% else %}
+        At capacity!
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+$('.edit-event').click(function(){
+    $('.unseen').hide();
+    $('.edit-event').show();
+    $('.edit-players').show();
+    $('.event-editor').show();
+    $(this).hide();
+    $('.event-editor').find('textarea').text( $('.event-editor').find('textarea').attr('value') );
+});
+$('.edit-players').click(function(){
+    $('.unseen').hide();
+    $('.event').show();
+    $('.edit-event').show();
+    $('.edit-players').show();
+    $('.remove-button').show();
+    $(this).hide();
+});
+</script>
+{% endblock %}

@@ -32,19 +32,19 @@
                 {{ edit_user.email(class='form-control', id='edituseremail', value=user.email) }}
             </div>
         </div>
-          <div class="form-group">
-    <div class="col-sm-offset-2 col-sm-10">
-        <div class='checkbox'>
-            <label>
-                {% if user.notify == 1 %}
-                {{ edit_user.notify(type='checkbox', checked='yes') }} Get notifications
-                {% else %}
-                {{ edit_user.notify(type='checkbox') }} Get notifications
-                {% endif %}
-            <label>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <div class='checkbox'>
+                    <label>
+                        {% if user.notify == 1 %}
+                        {{ edit_user.notify(type='checkbox', checked='yes') }} Get notifications
+                        {% else %}
+                        {{ edit_user.notify(type='checkbox') }} Get notifications
+                        {% endif %}
+                    </label>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
         <button class='btn' type=submit>Change info</button>
     </form>
     <div>

@@ -215,7 +215,7 @@ def add_event():
                 msg = Message("New gametimes!",
                         sender="Gamebot",
                         recipients=[u.email],
-                        body="There's a new game event!\n\n"+date+" at "+event.time+"\n\nIt's hosted by "+event.host+" at "+event.location+"\n\nAbout it: "+event.description+"\n\nGo to www.stvnrlly.com/games to check it out.")
+                        body="There's a new game event!\n\n"+date+" at "+event.time+"\n\nIt's hosted by "+event.host+" at "+event.location+"\n\nAbout it: "+event.description+"\n\nGo to www.stvnrlly.com/games/event/"+event.id+" to check it out.")
                 mail.send(msg)
     else:
         flash(new_event.errors)
@@ -337,6 +337,27 @@ def edit_user():
     else:
         flash(edit_event.errors)
     return redirect('/profile')
+
+# Individual event pages
+
+@app.route('/event/<id>', methods=['GET', 'POST'])
+def event(id):
+    add_guest = AddGuest(request.form)
+    remove_player = RemovePlayer(request.form)
+    edit_event = EditEvent(request.form)
+    user = session.get('user')
+    user = User.query.filter(User.id == user).first()
+    event = Event.query.filter(Event.id == id).first()
+    event.date = datetime.strftime(datetime.strptime(event.date, '%Y-%m-%d'), '%B %d, %Y')
+    players = Player.query.filter(Player.event_id == id).all()
+    adders = []
+    for player in players:
+        if player.added_by in players:
+            continue
+        else:
+            adders.append(player.added_by)
+    return render_template('event.html', user=user, event=event, players=players, \
+                            add_guest=add_guest, remove_player=remove_player, edit_event=edit_event, adders=adders)
 
 # Handle login using OAuth
 

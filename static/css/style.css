@@ -52,6 +52,15 @@ td {
     margin-right: auto;
 }
 
+.unstyled {
+    text-decoration: none !important;
+    color: #000000;
+}
+
+.unstyled:hover {
+    color: #6b6b6b;
+}
+
 @media (min-width: 768px) {
     .container {
         max-width: 600px;
