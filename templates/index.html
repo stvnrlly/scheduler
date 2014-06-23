@@ -61,6 +61,23 @@
     <div> <!-- begin event {{ event.id }} -->
         {% if (event.added_by == user.id|string()) or (user.role == 'admin') %}
         <button class='btn pull-right edit-event' id='{{ event.id }}'>Edit event</button>
+        <button class='btn pull-right event-editor unseen {{ event.id }}' data-toggle='modal' data-target='.delete-confirm'>Delete event</button>
+        <div class='modal fade delete-confirm' tabindex="-1" role="dialog" aria-labelledby="delete-confirm" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class='modal-title'>Delete this event?</h4>
+                    </div>
+                    <div class='modal-body'>
+                        <p>Are you sure? This will delete the event permanently.</p>
+                        <form action='/remove_event' method='post'>
+                            {{ remove_event.csrf_token }}{{ remove_event.id(value=event.id) }}<button class='btn' type=submit>Yep, I'm sure</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endif %}
         <h2><a class='unstyled' href='event/{{ event.id }}'>{% if event.title %}{{ event.title }}{%else %}#{{ event.id}}{% endif %}</a></h2>
         <p class='small description'>{{ event.description }}</p>
@@ -107,7 +124,7 @@
                     {{ edit_event.description(class='form-control', id='editeventdescription', rows=3, value=event.description) }}
                 </div>
             </div>
-            <button class='btn' type=submit>Submit</button>
+            <button class='btn' type=submit>Update event</button>
         </form>
         <div class='event {{ event.id }}'>
             {% if event.minimum %}

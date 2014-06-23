@@ -135,6 +135,9 @@ class AddGuest(Form):
 class RemovePlayer(Form):
     id = HiddenField('id')
 
+class RemoveEvent(Form):
+    id = HiddenField('id')
+
 class EditEvent(Form):
     id = HiddenField('id')
     date = DateField('date', [validators.Required()])
@@ -191,9 +194,10 @@ def games():
     new_event = NewEvent(request.form)
     add_guest = AddGuest(request.form)
     remove_player = RemovePlayer(request.form)
+    remove_event = RemoveEvent(request.form)
     edit_event = EditEvent(request.form)
     return render_template('index.html', user=user, events=events, players=players, adders=adders, names=names, new_event=new_event, \
-                            add_guest=add_guest, remove_player=remove_player, edit_event=edit_event)
+                            add_guest=add_guest, remove_player=remove_player, remove_event=remove_event, edit_event=edit_event)
 
 @app.route('/add_event', methods=['POST'])
 def add_event():
@@ -280,6 +284,22 @@ def remove_player():
         flash(remove_player.errors)
     return redirect('/games')
 
+@app.route('/remove_event', methods=['POST'])
+def remove_event():
+    remove_event = RemoveEvent(request.form)
+    if remove_event.validate_on_submit():
+        event = Event.query.filter(Event.id == remove_event.id.data).first()
+        players = Player.query.filter(Player.event_id == remove_event.id.data).all()
+        db_session.delete(event)
+        for player in players:
+            db_session.delete(player)
+        db_session.commit()
+        db_session.flush()
+        flash('Successfully removed.')
+    else:
+        flash(remove_event.errors)
+    return redirect('/games')
+
 @app.route('/edit_event', methods=['POST'])
 def edit_event():
     edit_event = EditEvent(request.form)
@@ -344,6 +364,7 @@ def edit_user():
 def event(id):
     add_guest = AddGuest(request.form)
     remove_player = RemovePlayer(request.form)
+    remove_event = RemoveEvent(request.form)
     edit_event = EditEvent(request.form)
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
@@ -357,7 +378,8 @@ def event(id):
         else:
             adders.append(player.added_by)
     return render_template('event.html', user=user, event=event, players=players, \
-                            add_guest=add_guest, remove_player=remove_player, edit_event=edit_event, adders=adders)
+                            add_guest=add_guest, remove_player=remove_player, \
+                            remove_event=remove_event, edit_event=edit_event, adders=adders)
 
 # Handle login using OAuth
 

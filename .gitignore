@@ -3,3 +3,4 @@ games.db
 venv
 deactivate
 creds.py
+.DS_Store
