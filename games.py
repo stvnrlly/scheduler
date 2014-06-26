@@ -2,6 +2,7 @@ import os, json
 from datetime import datetime
 from sqlite3 import dbapi2 as sqlite3
 from urllib2 import Request, urlopen, URLError
+from urlparse import urlparse, urljoin
 from flask import Flask, request, session, g, redirect, url_for, abort, \
     render_template, flash
 from flask.ext.wtf import Form
@@ -116,9 +117,41 @@ class Player(Base):
 def init_db():
     Base.metadata.create_all(bind=engine)
 
+# Set up redirects for WTForms completion
+# Code from http://flask.pocoo.org/snippets/63/
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
+
+
+def get_redirect_target():
+    for target in request.args.get('next'), request.referrer:
+        if not target:
+            continue
+        if is_safe_url(target):
+            return target
+
+
+class RedirectForm(Form):
+    next = HiddenField()
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        if not self.next.data:
+            self.next.data = get_redirect_target() or ''
+
+    def redirect(self, endpoint='index', **values):
+        if is_safe_url(self.next.data):
+            return redirect(self.next.data)
+        target = get_redirect_target()
+        return redirect(target or url_for(endpoint, **values))
+
 # Create classes for WTForms
 
-class NewEvent(Form):
+class NewEvent(RedirectForm):
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
@@ -127,18 +160,18 @@ class NewEvent(Form):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
-class AddGuest(Form):
+class AddGuest(RedirectForm):
     name = TextField('name', [validators.Optional()])
     email_changes = BooleanField('email_changes', [validators.Optional()])
     event_id = HiddenField('event_id', [validators.Required()])
 
-class RemovePlayer(Form):
+class RemovePlayer(RedirectForm):
     id = HiddenField('id')
 
-class RemoveEvent(Form):
+class RemoveEvent(RedirectForm):
     id = HiddenField('id')
 
-class EditEvent(Form):
+class EditEvent(RedirectForm):
     id = HiddenField('id')
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
@@ -148,7 +181,7 @@ class EditEvent(Form):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
-class EditUser(Form):
+class EditUser(RedirectForm):
     name = TextField('name')
     email = TextField('email')
     notify = BooleanField('notify', [validators.Optional()])
@@ -223,7 +256,7 @@ def add_event():
                 mail.send(msg)
     else:
         flash(new_event.errors)
-    return redirect('/games')
+    return add_event.redirect()
 
 @app.route('/add_guest', methods=['POST'])
 def add_guest():
@@ -269,7 +302,7 @@ def add_guest():
             flash("You've already added that person! Try another name.")
     else:
         flash(add_guest.errors)
-    return redirect('/games')
+    return add_guest.redirect()
 
 @app.route('/remove_player', methods=['POST'])
 def remove_player():
@@ -282,7 +315,7 @@ def remove_player():
         flash('Successfully removed.')
     else:
         flash(remove_player.errors)
-    return redirect('/games')
+    return remove_player.redirect()
 
 @app.route('/remove_event', methods=['POST'])
 def remove_event():
@@ -298,7 +331,7 @@ def remove_event():
         flash('Successfully removed.')
     else:
         flash(remove_event.errors)
-    return redirect('/games')
+    return remove_event.redirect()
 
 @app.route('/edit_event', methods=['POST'])
 def edit_event():
@@ -317,7 +350,7 @@ def edit_event():
         flash('Event was successfully edited')
     else:
         flash(edit_event.errors)
-    return redirect('/games')
+    return edit_event.redirect()
 
 # Profile page where user can see and edit user info
 
@@ -356,7 +389,7 @@ def edit_user():
         db_session.flush()
     else:
         flash(edit_event.errors)
-    return redirect('/profile')
+    return edit_user.redirect('/profile')
 
 # Individual event pages
 
