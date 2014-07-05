@@ -1,4 +1,4 @@
-import os, json
+import os, json, functools
 from datetime import datetime
 from sqlite3 import dbapi2 as sqlite3
 from urllib2 import Request, urlopen, URLError
@@ -118,40 +118,42 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 # Set up redirects for WTForms completion
-# Code from http://flask.pocoo.org/snippets/63/
+# Code from http://flask.pocoo.org/snippets/120/
 
-def is_safe_url(target):
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-           ref_url.netloc == test_url.netloc
+class back(object):
+    """To be used in views.
 
+    Use `anchor` decorator to mark a view as a possible point of return.
 
-def get_redirect_target():
-    for target in request.args.get('next'), request.referrer:
-        if not target:
-            continue
-        if is_safe_url(target):
-            return target
+    `url()` is the last saved url.
 
+    Use `redirect` to return to the last return point visited.
+    """
 
-class RedirectForm(Form):
-    next = HiddenField()
+    cfg = app.config.get
+    cookie = cfg('REDIRECT_BACK_COOKIE', 'back')
+    default_view = cfg('REDIRECT_BACK_DEFAULT', 'games')
 
-    def __init__(self, *args, **kwargs):
-        Form.__init__(self, *args, **kwargs)
-        if not self.next.data:
-            self.next.data = get_redirect_target() or ''
+    @staticmethod
+    def anchor(func, cookie=cookie):
+        @functools.wraps(func)
+        def result(*args, **kwargs):
+            session[cookie] = request.url
+            return func(*args, **kwargs)
+        return result
 
-    def redirect(self, endpoint='index', **values):
-        if is_safe_url(self.next.data):
-            return redirect(self.next.data)
-        target = get_redirect_target()
-        return redirect(target or url_for(endpoint, **values))
+    @staticmethod
+    def url(default=default_view, cookie=cookie):
+        return session.get(cookie, url_for(default))
+
+    @staticmethod
+    def redirect(default=default_view, cookie=cookie):
+        return redirect(back.url(default, cookie))
+back = back()
 
 # Create classes for WTForms
 
-class NewEvent(RedirectForm):
+class NewEvent(Form):
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
     location = TextField('location', [validators.Required()])
@@ -160,18 +162,18 @@ class NewEvent(RedirectForm):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
-class AddGuest(RedirectForm):
+class AddGuest(Form):
     name = TextField('name', [validators.Optional()])
     email_changes = BooleanField('email_changes', [validators.Optional()])
     event_id = HiddenField('event_id', [validators.Required()])
 
-class RemovePlayer(RedirectForm):
+class RemovePlayer(Form):
     id = HiddenField('id')
 
-class RemoveEvent(RedirectForm):
+class RemoveEvent(Form):
     id = HiddenField('id')
 
-class EditEvent(RedirectForm):
+class EditEvent(Form):
     id = HiddenField('id')
     date = DateField('date', [validators.Required()])
     time = TextField('time', [validators.Required()])
@@ -181,7 +183,7 @@ class EditEvent(RedirectForm):
     minimum = TextField('minimum', [validators.Optional()])
     maximum = TextField('maximum', [validators.Optional()])
 
-class EditUser(RedirectForm):
+class EditUser(Form):
     name = TextField('name')
     email = TextField('email')
     notify = BooleanField('notify', [validators.Optional()])
@@ -197,6 +199,7 @@ def after_request(response):
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/games', methods=['GET','POST'])
+@back.anchor
 def games():
     user = session.get('user')
     user = User.query.filter(User.id == user).first()
@@ -256,7 +259,7 @@ def add_event():
                 mail.send(msg)
     else:
         flash(new_event.errors)
-    return add_event.redirect()
+    return back.redirect()
 
 @app.route('/add_guest', methods=['POST'])
 def add_guest():
@@ -302,7 +305,7 @@ def add_guest():
             flash("You've already added that person! Try another name.")
     else:
         flash(add_guest.errors)
-    return add_guest.redirect()
+    return back.redirect()
 
 @app.route('/remove_player', methods=['POST'])
 def remove_player():
@@ -315,7 +318,7 @@ def remove_player():
         flash('Successfully removed.')
     else:
         flash(remove_player.errors)
-    return remove_player.redirect()
+    return back.redirect()
 
 @app.route('/remove_event', methods=['POST'])
 def remove_event():
@@ -331,7 +334,7 @@ def remove_event():
         flash('Successfully removed.')
     else:
         flash(remove_event.errors)
-    return remove_event.redirect()
+    return back.redirect()
 
 @app.route('/edit_event', methods=['POST'])
 def edit_event():
@@ -350,11 +353,12 @@ def edit_event():
         flash('Event was successfully edited')
     else:
         flash(edit_event.errors)
-    return edit_event.redirect()
+    return back.redirect()
 
 # Profile page where user can see and edit user info
 
 @app.route('/profile', methods=['GET'])
+@back.anchor
 def profile():
     edit_user = EditUser(request.form)
     user = session.get('user')
@@ -389,11 +393,12 @@ def edit_user():
         db_session.flush()
     else:
         flash(edit_event.errors)
-    return edit_user.redirect('/profile')
+    return back.redirect()
 
 # Individual event pages
 
 @app.route('/event/<id>', methods=['GET', 'POST'])
+@back.anchor
 def event(id):
     add_guest = AddGuest(request.form)
     remove_player = RemovePlayer(request.form)
@@ -453,7 +458,7 @@ def authorized(resp):
         db_session.commit()
         db_session.flush()
     session['user'] = user.id
-    return redirect('/games')
+    return back.redirect()
 
 @google.tokengetter
 def get_access_token():
